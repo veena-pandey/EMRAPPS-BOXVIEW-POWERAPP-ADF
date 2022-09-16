@@ -1,0 +1,61 @@
+{
+	"name": "Load Region Data To Blob",
+	"properties": {
+		"folder": {
+			"name": "CSP"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "blob_country_staging_data",
+						"type": "DatasetReference"
+					},
+					"name": "StagingBlobCountry"
+				},
+				{
+					"dataset": {
+						"referenceName": "blob_user_exported_data",
+						"type": "DatasetReference"
+					},
+					"name": "userdatafromblob"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "blob_region_intermediate_data",
+						"type": "DatasetReference"
+					},
+					"name": "IntermediateBlobCountry",
+					"description": "Export data to blob_customer_data"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DataTransformation"
+				},
+				{
+					"name": "LookupRegionalManagerReefer"
+				},
+				{
+					"name": "SelectRegionalManagerReefer"
+				},
+				{
+					"name": "LookupRegionalManagerDry"
+				},
+				{
+					"name": "SelectRegionalManagerDry"
+				},
+				{
+					"name": "SelectRequiredColumns"
+				},
+				{
+					"name": "SelectDistinctValues"
+				}
+			],
+			"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['country']) ~> StagingBlobCountry\nsource(output(\n\t\tqueueid as string,\n\t\tsystemuserid as string,\n\t\tinternalemailaddress as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['systemuser/*.parquet']) ~> userdatafromblob\nStagingBlobCountry derive(short = trim(toString(byName('short'))),\n\t\tcountry = trim(toString(byName('country'))),\n\t\tarea = trim(toString(byName('area'))),\n\t\tteam = trim(toString(byName('team'))),\n\t\tteam_name = trim(toString(byName('team_name'))),\n\t\tregional_manager_dry = trim(toString(byName('regional_manager_dry'))),\n\t\tregional_manager_reefer = trim(toString(byName('regional_manager_reefer'))),\n\t\tsales_manager_dry = trim(toString(byName('sales_manager_dry'))),\n\t\tsales_manager_reefer = trim(toString(byName('sales_manager_reefer'))),\n\t\tcustomer_service = trim(toString(byName('customer_service'))),\n\t\tsales_operations = trim(toString(byName('sales_operations'))),\n\t\tsales_manager_backup = trim(toString(byName('sales_manager_backup'))),\n\t\tallowed_for_sale = toBoolean(case(upper(trim(toString(byName('allowed_for_sale'))))=='Y',\"1\",\"0\")),\n\t\tcurrency = trim(toString(byName('currency'))),\n\t\tnationalisation = toBoolean(case(upper(trim(toString(byName('nationalisation'))))=='Y',\"1\",\"0\")),\n\t\ttax_and_legal_approval = toBoolean(case(upper(trim(toString(byName('tax_and_legal_approval'))))=='Y',\"1\",\"0\")),\n\t\tcustom_clearance = toBoolean(case(upper(trim(toString(byName('custom_clearance'))))=='Y',\"1\",\"0\")),\n\t\tcustom_documentation_required_before_or_after_releasing_equipment = toInteger(case(upper(trim(toString(byName('custom_documentation_required_before_or_after_releasing_equipment'))))=='NONE',\"379430000\",\r\ncase(upper(trim(toString(byName('custom_documentation_required_before_or_after_releasing_equipment'))))==\"BEFORE\",\"379430001\",\r\ncase(upper(trim(toString(byName('custom_documentation_required_before_or_after_releasing_equipment'))))==\"AFTER\",\"379430002\")))),\n\t\tbilateral_sales = toBoolean(case(upper(trim(toString(byName('bilateral_sales'))))=='Y',\"1\",\"0\")),\n\t\tbilateral_gst_vat = toDecimal(trim(toString(byName('bilateral_gst_vat')))),\n\t\tlocal_vat_gst_amount = toDecimal(trim(toString(byName('local_vat_gst_amount')))),\n\t\tlocal_agency_billing = toBoolean(case(upper(trim(toString(byName('local_agency_billing'))))=='Y',\"1\",\"0\")),\n\t\tagency_sales_agreement = toBoolean(case(upper(trim(toString(byName('agency_sales_agreement'))))=='Y',\"1\",\"0\")),\n\t\trelease_free_time = toInteger(trim(toString(byName('release_free_time')))),\n\t\tcash_payment_waiting_time = toInteger(trim(toString(byName('cash_payment_waiting_time')))),\n\t\tdiscount_limit_dry = toInteger(trim(toString(byName('discount_limit_dry')))),\n\t\tdiscount_limit_reefer = toInteger(trim(toString(byName('discount_limit_reefer')))),\n\t\tsales_terms = trim(toString(byName('sales_terms'))),\n\t\tsales_notice = trim(toString(byName('sales_notice'))),\n\t\tloc = trim(toString(byName('loc'))),\n\t\tcancellation_fee_per_unit = toInteger(trim(toString(byName('cancellation_fee_per_unit')))),\n\t\thandling_charges_per_unit = toInteger(trim(toString(byName('handling_charges_per_unit')))),\n\t\tload_port_to_display = toBoolean(case(upper(trim(toString(byName('load_port_to_display'))))=='Y',\"1\",\"0\")),\n\t\tdischarge_port_to_display = toBoolean(case(upper(trim(toString(byName('discharge_port_to_display'))))=='Y',\"1\",\"0\")),\n\t\tinvoice_header_general = trim(toString(byName('invoice_header_general'))),\n\t\tinvoice_header_billoflading = toBoolean(case(upper(trim(toString(byName('invoice_header_billoflading'))))=='Y',\"1\",\"0\")),\n\t\tinvoice_header_manufacturedby = toBoolean(case(upper(trim(toString(byName('invoice_header_manufacturedby'))))=='Y',\"1\",\"0\")),\n\t\tinvoice_header_incoterm = trim(toString(byName('invoice_header_incoterm'))),\n\t\tinvoice_header_getflevy = toInteger(trim(toString(byName('invoice_header_getflevy')))),\n\t\tinvoice_header_nhilevy = toInteger(trim(toString(byName('invoice_header_nhilevy')))),\n\t\tinvoice_header_portofloading = toBoolean(case(upper(trim(toString(byName('invoice_header_portofloading'))))=='Y',\"1\",\"0\")),\n\t\tinvoice_header_hfm = trim(toString(byName('invoice_header_hfm'))),\n\t\tinvoice_header_hfmics = trim(toString(byName('invoice_header_hfmics'))),\n\t\tinvoice_header_hfmpayer = trim(toString(byName('invoice_header_hfmpayer'))),\n\t\tinvoice_address_abn_gst_taxid = trim(toString(byName('invoice_address_abn_gst_taxid'))),\n\t\tbanking_details = trim(toString(byName('banking_details'))),\n\t\tscv_code_agency = trim(toString(byName('scv_code_agency')))) ~> DataTransformation\nSelectRequiredColumns, userdatafromblob lookup({maersk_region.maersk_regionalmanagerreefer} == internalemailaddress,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupRegionalManagerReefer\nLookupRegionalManagerReefer select(mapColumn(\n\t\tmaersk_regioncode = {maersk_region.maersk_regioncode},\n\t\tmaersk_name = {maersk_region.maersk_name},\n\t\tmaersk_regionalmanagerdry = {maersk_region.maersk_regionalmanagerdry},\n\t\tmaersk_regionalmanagerreefer = systemuserid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRegionalManagerReefer\nSelectRegionalManagerReefer, userdatafromblob lookup(maersk_regionalmanagerdry == internalemailaddress,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupRegionalManagerDry\nLookupRegionalManagerDry select(mapColumn(\n\t\tmaersk_regioncode,\n\t\tmaersk_name,\n\t\tmaersk_regionalmanagerdry = systemuserid,\n\t\tmaersk_regionalmanagerreefer\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRegionalManagerDry\nDataTransformation select(mapColumn(\n\t\t{maersk_region.maersk_regioncode} = team,\n\t\t{maersk_region.maersk_name} = team_name,\n\t\t{maersk_region.maersk_regionalmanagerdry} = regional_manager_dry,\n\t\t{maersk_region.maersk_regionalmanagerreefer} = regional_manager_reefer\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumns\nSelectRegionalManagerDry aggregate(groupBy(maersk_name),\n\teach(match(name!='maersk_name'), $$ = first($$))) ~> SelectDistinctValues\nSelectDistinctValues sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tmapColumn(\n\t\tmaersk_name,\n\t\tmaersk_regioncode,\n\t\tmaersk_regionalmanagerdry,\n\t\tmaersk_regionalmanagerreefer\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobCountry"
+		}
+	}
+}

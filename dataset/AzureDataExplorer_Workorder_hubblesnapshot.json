@@ -1,0 +1,18 @@
+{
+	"name": "AzureDataExplorer_Workorder_hubblesnapshot",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataExplorer_BoxView",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ADX"
+		},
+		"annotations": [],
+		"type": "AzureDataExplorerTable",
+		"schema": [],
+		"typeProperties": {
+			"table": "work_order_mrl_hubble_snapshot | join kind=leftouter (work_order | project shop_id, wolocation_id = location_id,cluster_id,work_order_id,total_cost_usd) on work_order_id  | project work_order_id,container_id,is_sales,is_surplus,equipment_size,location_id,last_move_timestamp,is_empty,last_move,equipment_redelivery_status,adjusted_MRL,adjusted_MRL_box,total_cost_with_maersk_parts_usd,total_price_not_covered_by_warranty,total_cost_under_warranty,expiry_date,should_repair,reasoning_for_rejection,work_order_created_date,urgent,shop_id,cluster_id, wolocation_id,total_cost_usd"
+		}
+	}
+}

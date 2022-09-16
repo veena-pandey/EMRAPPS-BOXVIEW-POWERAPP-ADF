@@ -1,0 +1,804 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DMRL Container dataverse Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow for transformation",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Export DMRL Container Data From Dataverse to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Load DMRL Container Data To Blob",
+								"type": "DataFlowReference",
+								"parameters": {
+									"ForceFullRefresh": {
+										"value": "@pipeline().parameters.ForceFullDatasetRefresh",
+										"type": "Expression"
+									}
+								}
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "DMRLContainer Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Dataverse Exported Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Intermediate Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Staging Folder For ContainerADX",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "containers_with_mrl | take 5",
+								"queryTimeout": "00:50:00",
+								"noTruncation": false
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_DMRLContainer",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLContainer_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Staging Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Dataverse Exported Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Intermediate Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_Intermediate_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Export DMRL Container Data From Dataverse to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "DMRLContainerADX Data From ADX To Staging Blob_copy1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch  top=\"5\" distinct=\"false\">\n  <entity name=\"maersk_dmrlcontainer\">\n    <attribute name=\"maersk_dmrlcontainerid\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_datahash\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_DMRLContainer",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy DMRL Container to Dataverse",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data flow for transformation",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "dmrlcontainer",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DynamicsSink",
+								"writeBatchSize": 10,
+								"writeBehavior": "upsert",
+								"ignoreNullValues": false,
+								"alternateKeyName": "maersk_containernamekey"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "ContainerNo",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "MRLUnit",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_mrlunit",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "MRLBox",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_mrlbox",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "ContainerType",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_containertype",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "EquipmentManufacturer",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentmanufacturer",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "isSales",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_issales",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "isSurplus",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_issurplus",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "reasoning",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_reasoning",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "DamagePrediction",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										},
+										"sink": {
+											"name": "maersk_damageprediction",
+											"type": "Double"
+										}
+									},
+									{
+										"source": {
+											"name": "Location",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_location",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "current_location_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_currentlocation",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_own_type",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentowner",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "is_empty",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_isempty",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_leasing_company",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_leasingcompanyname",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "move",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_move",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "location_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_locationid",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "move_timestamp",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_movetimestamp",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_leasing_contract_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentleasingcontractid",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "profile",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_profile",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "payload_weight",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_payloadweight",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_group",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentgroup",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "checksum",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_datahash",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "production_year"
+										},
+										"sink": {
+											"name": "maersk_productionyear"
+										}
+									},
+									{
+										"source": {
+											"name": "container_status"
+										},
+										"sink": {
+											"name": "maersk_containerstatus"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_infleet_year"
+										},
+										"sink": {
+											"name": "maersk_equipmentinfleetyear"
+										}
+									},
+									{
+										"source": {
+											"name": "lease_start_date"
+										},
+										"sink": {
+											"name": "maersk_leasestartdate"
+										}
+									},
+									{
+										"source": {
+											"name": "lease_end_date"
+										},
+										"sink": {
+											"name": "maersk_leaseenddate"
+										}
+									},
+									{
+										"source": {
+											"name": "total_cost_usd_lifetime"
+										},
+										"sink": {
+											"name": "maersk_totalcostusd"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_DMRLContainer_Intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "boxview_DMRLContainer",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "DMRLContainerADX Data From ADX To Staging Blob_copy1",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "DMRLContainer Data From ADX To Staging Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "container_adx | take 5 | project container_id,current_location_id,equipment_own_type,is_empty,equipment_leasing_company,['move'], location_id,move_timestamp,equipment_leasing_contract_id,profile,payload_weight,equipment_group,production_year,container_status,equipment_infleet_year,lease_start_date,lease_end_date,total_cost_usd_lifetime",
+								"queryTimeout": "00:50:00",
+								"noTruncation": false
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_DMRLContainerADX",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLContainerADX_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Staging Folder For ContainerADX",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLContainerADX_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"parameters": {
+					"ForceFullDatasetRefresh": {
+						"type": "bool",
+						"defaultValue": false
+					}
+				},
+				"folder": {
+					"name": "DMRL"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-07T06:14:44Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/dataflows/Load DMRL Container Data To Blob')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load DMRL Container Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "DMRL"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobDMRLContainer"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "sitedatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dataverseData"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainerADX_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobDMRLContainerADX"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_Intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobDMRLContainer",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "LookupLocation"
+						},
+						{
+							"name": "SelectLocation"
+						},
+						{
+							"name": "checksum"
+						},
+						{
+							"name": "RelateTwoDatasets"
+						},
+						{
+							"name": "SelectNewRowColumns"
+						},
+						{
+							"name": "FilterOnlyNewRows"
+						},
+						{
+							"name": "DataTransformationDMRLContainerADX"
+						},
+						{
+							"name": "JoinDMRLContainerAndDMRLContainerADX"
+						},
+						{
+							"name": "SelectRequiredCoulmns"
+						}
+					],
+					"script": "parameters{\n\tForceFullRefresh as boolean (false())\n}\nsource(output(\n\t\tContainerNo as string,\n\t\tMRLUnit as decimal(38,18),\n\t\tMRLBox as decimal(38,18),\n\t\tContainerType as string,\n\t\tEquipmentManufacturer as string,\n\t\tisSales as boolean,\n\t\tisSurplus as boolean,\n\t\tLocation as string,\n\t\tProductionYear as string,\n\t\treasoning as string,\n\t\tDamagePrediction as double\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlcontainer']) ~> StagingBlobDMRLContainer\nsource(output(\n\t\tmaersk_country as string,\n\t\tmaersk_siteid as string,\n\t\tmaersk_name as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> sitedatafromblob\nsource(output(\n\t\tmaersk_reasoning as string,\n\t\tmaersk_location as string,\n\t\tmaersk_dmrlcontainerid as string,\n\t\tmaersk_mrlbox as integer,\n\t\tmaersk_equipmentmanufacturer as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_issurplus as boolean,\n\t\tmaersk_name as string,\n\t\tmaersk_issales as boolean,\n\t\tmaersk_mrlunit as integer,\n\t\tmaersk_damageprediction as double,\n\t\tmaersk_containertype as string,\n\t\tmaersk_datahash as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlcontainer']) ~> dataverseData\nsource(output(\n\t\tcontainer_id as string,\n\t\tcurrent_location_id as string,\n\t\tequipment_own_type as string,\n\t\tis_empty as boolean,\n\t\tequipment_leasing_company as string,\n\t\tmove as string,\n\t\tlocation_id as string,\n\t\tmove_timestamp as timestamp,\n\t\tequipment_leasing_contract_id as string,\n\t\tprofile as string,\n\t\tpayload_weight as string,\n\t\tequipment_group as string,\n\t\tproduction_year as string,\n\t\tcontainer_status as string,\n\t\tequipment_infleet_year as integer,\n\t\tlease_start_date as timestamp,\n\t\tlease_end_date as timestamp,\n\t\ttotal_cost_usd_lifetime as double\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlcontaineradx']) ~> StagingBlobDMRLContainerADX\nStagingBlobDMRLContainer derive(ContainerNo = trim(toString(byName('ContainerNo'))),\n\t\tMRLUnit = toInteger(byName('MRLUnit')),\n\t\tMRLBox = toInteger(byName('MRLBox')),\n\t\tContainerType = trim(toString(byName('ContainerType'))),\n\t\tEquipmentManufacturer = trim(toString(byName('EquipmentManufacturer'))),\n\t\tisSales = toBoolean(case(upper(trim(toString(byName('isSales'))))=='TRUE',\"1\",\"0\")),\n\t\tisSurplus = toBoolean(case(upper(trim(toString(byName('isSurplus'))))=='TRUE',\"1\",\"0\")),\n\t\tLocation = trim(toString(byName('Location'))),\n\t\tProductionYear = trim(toString(byName('ProductionYear'))),\n\t\treasoning = trim(toString(byName('reasoning'))),\n\t\tDamagePrediction = toDouble(byName('DamagePrediction'))) ~> DataTransformation\nDataTransformation, sitedatafromblob lookup(Location == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupLocation\nLookupLocation select(mapColumn(\n\t\tContainerNo,\n\t\tMRLUnit,\n\t\tMRLBox,\n\t\tContainerType,\n\t\tEquipmentManufacturer,\n\t\tisSales,\n\t\tisSurplus,\n\t\tProductionYear,\n\t\treasoning,\n\t\tDamagePrediction,\n\t\tLocation = maersk_siteid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectLocation\nSelectRequiredCoulmns derive(checksum = sha1(columns('SelectRequiredCoulmns'))) ~> checksum\nchecksum, dataverseData join(ContainerNo == maersk_name,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> RelateTwoDatasets\nFilterOnlyNewRows select(mapColumn(\n\t\tContainerNo,\n\t\tMRLUnit,\n\t\tMRLBox,\n\t\tContainerType,\n\t\tEquipmentManufacturer,\n\t\tisSales,\n\t\tisSurplus,\n\t\treasoning,\n\t\tDamagePrediction,\n\t\tLocation,\n\t\tcurrent_location_id,\n\t\tequipment_own_type,\n\t\tis_empty,\n\t\tequipment_leasing_company,\n\t\tmove,\n\t\tlocation_id,\n\t\tmove_timestamp,\n\t\tequipment_leasing_contract_id,\n\t\tprofile,\n\t\tpayload_weight,\n\t\tequipment_group,\n\t\tchecksum,\n\t\tcontainer_status,\n\t\tproduction_year = ProductionYear,\n\t\ttotal_cost_usd_lifetime,\n\t\tlease_end_date,\n\t\tlease_start_date,\n\t\tequipment_infleet_year\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectNewRowColumns\nRelateTwoDatasets filter(case($ForceFullRefresh==true(), true(), case(maersk_datahash==checksum, false(), true()))) ~> FilterOnlyNewRows\nStagingBlobDMRLContainerADX derive(container_id = trim(toString(byName('container_id'))),\n\t\tcurrent_location_id = trim(toString(byName('current_location_id'))),\n\t\tequipment_own_type = trim(toString(byName('equipment_own_type'))),\n\t\tis_empty = toBoolean(case(upper(trim(toString(byName('is_empty'))))=='TRUE',\"1\",\"0\")),\n\t\tequipment_leasing_company = trim(toString(byName('equipment_leasing_company'))),\n\t\tmove = case(trim(toString(byName('move')))=='GATE-IN',379430000,\r\n    case(trim(toString(byName('move')))=='GATE-OUT',379430001,\r\n        case(trim(toString(byName('move')))=='DISCHARG',379430002,\r\n            case(trim(toString(byName('move')))=='LOAD',379430003,\r\n                case(trim(toString(byName('move')))=='ON-RAIL',379430004,\r\n                    case(trim(toString(byName('move')))=='OFF-RAIL',379430005,\r\n                        case(trim(toString(byName('move')))=='STRIPPIN',379430006))))))),\n\t\tlocation_id = trim(toString(byName('location_id'))),\n\t\tmove_timestamp = toTimestamp(toString(byName('move_timestamp'))),\n\t\tequipment_leasing_contract_id = trim(toString(byName('equipment_leasing_contract_id'))),\n\t\tprofile = trim(toString(byName('profile'))),\n\t\tpayload_weight = trim(toString(byName('payload_weight'))),\n\t\tequipment_group = trim(toString(byName('equipment_group'))),\n\t\tproduction_year = trim(toString(byName('production_year'))),\n\t\tcontainer_status = trim(toString(byName('container_status'))),\n\t\tequipment_infleet_year = trim(toString(byName('equipment_infleet_year')))) ~> DataTransformationDMRLContainerADX\nSelectLocation, DataTransformationDMRLContainerADX join(ContainerNo == container_id,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> JoinDMRLContainerAndDMRLContainerADX\nJoinDMRLContainerAndDMRLContainerADX select(mapColumn(\n\t\tContainerNo,\n\t\tMRLUnit,\n\t\tMRLBox,\n\t\tContainerType,\n\t\tEquipmentManufacturer,\n\t\tisSales,\n\t\tisSurplus,\n\t\tProductionYear,\n\t\treasoning,\n\t\tDamagePrediction,\n\t\tLocation,\n\t\tcurrent_location_id,\n\t\tequipment_own_type,\n\t\tis_empty,\n\t\tequipment_leasing_company,\n\t\tmove,\n\t\tlocation_id,\n\t\tmove_timestamp,\n\t\tequipment_leasing_contract_id,\n\t\tprofile,\n\t\tpayload_weight,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tcontainer_status,\n\t\tequipment_infleet_year,\n\t\tlease_start_date,\n\t\tlease_end_date,\n\t\ttotal_cost_usd_lifetime\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredCoulmns\nSelectNewRowColumns sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobDMRLContainer"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

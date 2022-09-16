@@ -1,0 +1,79 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Load Pool Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSP"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_site_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobSite"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_country_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "CountryBlob"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_pool_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobPool",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "SelectRequiredColumns"
+						},
+						{
+							"name": "SelectDistinctValues"
+						},
+						{
+							"name": "maersknametoUpper"
+						},
+						{
+							"name": "LookupCountry"
+						},
+						{
+							"name": "SelectCountry"
+						}
+					],
+					"script": "source(output(\n\t\tloc_cd as string,\n\t\tsite_type as string,\n\t\tloc_dsc as string,\n\t\tcountry_cd as string,\n\t\tcountry_dsc as string,\n\t\tcity_cd as string,\n\t\tcity_dsc as string,\n\t\tcluster_cd as string,\n\t\tcluster_dsc as string,\n\t\tregion_cd as string,\n\t\tregion_dsc as string,\n\t\tpool_cd as string,\n\t\tpool_dsc as string,\n\t\tlopsc_cd as string,\n\t\tlopsc_dsc as string,\n\t\tlat as double,\n\t\tlon as double,\n\t\temail_address as string,\n\t\tphone as string,\n\t\tcontact_person as string,\n\t\taddress_1 as string,\n\t\taddress_2 as string,\n\t\taddress_3 as string,\n\t\tpostal_code as string,\n\t\tcity_name as string,\n\t\tlocal_tax as decimal(38,18),\n\t\tglobal_tax as decimal(38,18),\n\t\teu_tax as decimal(38,18),\n\t\tstate_province_name as string,\n\t\tsales_manager_dry as string,\n\t\tsales_manager_reefer as string,\n\t\tcustomer_service as string,\n\t\tsales_operations as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> StagingBlobSite\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_countrycode as string,\n\t\tmaersk_countryid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['country/*.parquet']) ~> CountryBlob\nStagingBlobSite derive(pool_cd = trim(toString(byName('pool_cd'))),\n\t\tpool_dsc = trim(toString(byName('pool_dsc'))),\n\t\tcountry_dsc = trim(toString(byName('country_dsc')))) ~> DataTransformation\nDataTransformation select(mapColumn(\n\t\tmaersk_poolcode = pool_cd,\n\t\tmaersk_name = pool_dsc,\n\t\tmaersk_country = country_dsc\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> SelectRequiredColumns\nSelectCountry aggregate(groupBy(maersk_name),\n\teach(match(name!='maersk_name'), $$ = first($$))) ~> SelectDistinctValues\nCountryBlob derive(maersk_name = upper(trim(toString(byName('maersk_name'))))) ~> maersknametoUpper\nSelectRequiredColumns, CountryBlob lookup(maersk_country == CountryBlob@maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCountry\nLookupCountry select(mapColumn(\n\t\tmaersk_poolcode,\n\t\tmaersk_name = SelectRequiredColumns@maersk_name,\n\t\tmaersk_country = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCountry\nSelectDistinctValues sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tmapColumn(\n\t\tmaersk_name,\n\t\tmaersk_poolcode,\n\t\tmaersk_country\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobPool"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

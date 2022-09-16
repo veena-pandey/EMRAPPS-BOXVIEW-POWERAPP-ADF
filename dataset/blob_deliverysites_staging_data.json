@@ -1,0 +1,23 @@
+{
+	"name": "blob_deliverysites_staging_data",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "CSP BLOB/Staging"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "delivery_sites",
+				"container": "stagingdata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

@@ -1,0 +1,6 @@
+{
+	"EnvironmentType": {
+		"type": "string",
+		"value": "dev"
+	}
+}

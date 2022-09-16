@@ -1,0 +1,411 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		},
+		"AzureBlobStorage_properties_typeProperties_connectionString_secretName": {
+			"type": "string",
+			"defaultValue": "BlobStorageConnectionString"
+		},
+		"AzureBlobStorage1_properties_typeProperties_connectionString_secretName": {
+			"type": "string",
+			"defaultValue": "BlobStorageConnectionString"
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_endpoint": {
+			"type": "object",
+			"defaultValue": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "BoxViewADXUrl"
+			}
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_tenant": {
+			"type": "string",
+			"defaultValue": "05d75c05-fa1a-42e7-9cf1-eb416c396f2d"
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_servicePrincipalId": {
+			"type": "object",
+			"defaultValue": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "boxviewapps-client-id"
+			}
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "box_view"
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_dataLakeStoreUri": {
+			"type": "object",
+			"defaultValue": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "BoxViewDataLakeStoreUri"
+			}
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_servicePrincipalId": {
+			"type": "object",
+			"defaultValue": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "boxviewapps-client-id"
+			}
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_tenant": {
+			"type": "string",
+			"defaultValue": "05d75c05-fa1a-42e7-9cf1-eb416c396f2d"
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_subscriptionId": {
+			"type": "string",
+			"defaultValue": ""
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_resourceGroupName": {
+			"type": "string",
+			"defaultValue": ""
+		},
+		"BoxViewVault_ls_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://boxviewvault.vault.azure.net/"
+		},
+		"BoxView_Dataverse_properties_typeProperties_servicePrincipalId": {
+			"type": "object",
+			"defaultValue": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "DataverseServicePrincipalId"
+			}
+		},
+		"boxview_asql_properties_typeProperties_connectionString_secretName": {
+			"type": "string",
+			"defaultValue": "AzureSQLConnectionString"
+		},
+		"CSP Main Schedule Trigger_properties_Master CSP Dataverse Pipeline_parameters_ForceFullDatasetRefresh": {
+			"type": "bool",
+			"defaultValue": false
+		},
+		"CSS Intermodal Container Trigger_properties_Intermodal Potential Containers To Deliver Dataverse Pipeline_parameters_ForceFullDatasetRefresh": {
+			"type": "bool",
+			"defaultValue": false
+		},
+		"CSS Potential Container Trigger_properties_Potential Container To Sell Dataverse Pipeline_parameters_ForceFullDatasetRefresh": {
+			"type": "bool",
+			"defaultValue": false
+		},
+		"CSS Potential Container Trigger_properties_Potential Container To Sell Dataverse Pipeline_parameters_ForceUIInputOverride": {
+			"type": "bool",
+			"defaultValue": false
+		},
+		"DMRL Main Schedule Trigger_properties_DMRL Master Pipeline_parameters_ForceDatasetRefresh": {
+			"type": "bool",
+			"defaultValue": false
+		},
+		"dataFactory_properties_globalParameters_EnvironmentType_value": {
+			"type": "string",
+			"defaultValue": "dev"
+		},
+		"dataFactory_location": {
+			"type": "string",
+			"defaultValue": "westeurope"
+		},
+		"dataFactory_identity_type": {
+			"type": "string",
+			"defaultValue": "SystemAssigned"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "Boxview-datafactory-dev_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"dataFactory_properties_globalParameters_EnvironmentType_value": {
+						"value": "[parameters('dataFactory_properties_globalParameters_EnvironmentType_value')]"
+					},
+					"dataFactory_location": {
+						"value": "[parameters('dataFactory_location')]"
+					},
+					"dataFactory_identity_type": {
+						"value": "[parameters('dataFactory_identity_type')]"
+					},
+					"BoxViewVault_ls_properties_typeProperties_baseUrl": {
+						"value": "[parameters('BoxViewVault_ls_properties_typeProperties_baseUrl')]"
+					},
+					"AzureBlobStorage_properties_typeProperties_connectionString_secretName": {
+						"value": "[parameters('AzureBlobStorage_properties_typeProperties_connectionString_secretName')]"
+					},
+					"AzureBlobStorage1_properties_typeProperties_connectionString_secretName": {
+						"value": "[parameters('AzureBlobStorage1_properties_typeProperties_connectionString_secretName')]"
+					},
+					"AzureDataExplorer_BoxView_properties_typeProperties_endpoint": {
+						"value": "[parameters('AzureDataExplorer_BoxView_properties_typeProperties_endpoint')]"
+					},
+					"AzureDataExplorer_BoxView_properties_typeProperties_tenant": {
+						"value": "[parameters('AzureDataExplorer_BoxView_properties_typeProperties_tenant')]"
+					},
+					"AzureDataExplorer_BoxView_properties_typeProperties_servicePrincipalId": {
+						"value": "[parameters('AzureDataExplorer_BoxView_properties_typeProperties_servicePrincipalId')]"
+					},
+					"AzureDataExplorer_BoxView_properties_typeProperties_database": {
+						"value": "[parameters('AzureDataExplorer_BoxView_properties_typeProperties_database')]"
+					},
+					"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_dataLakeStoreUri": {
+						"value": "[parameters('AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_dataLakeStoreUri')]"
+					},
+					"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_servicePrincipalId": {
+						"value": "[parameters('AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_servicePrincipalId')]"
+					},
+					"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_tenant": {
+						"value": "[parameters('AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_tenant')]"
+					},
+					"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_subscriptionId": {
+						"value": "[parameters('AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_subscriptionId')]"
+					},
+					"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_resourceGroupName": {
+						"value": "[parameters('AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_resourceGroupName')]"
+					},
+					"BoxView_Dataverse_properties_typeProperties_servicePrincipalId": {
+						"value": "[parameters('BoxView_Dataverse_properties_typeProperties_servicePrincipalId')]"
+					},
+					"boxview_asql_properties_typeProperties_connectionString_secretName": {
+						"value": "[parameters('boxview_asql_properties_typeProperties_connectionString_secretName')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "Boxview-datafactory-dev_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'Boxview-datafactory-dev_ArmTemplate_0')]"
+			]
+		},
+		{
+			"name": "Boxview-datafactory-dev_ArmTemplate_2",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_2.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'Boxview-datafactory-dev_ArmTemplate_1')]"
+			]
+		},
+		{
+			"name": "Boxview-datafactory-dev_ArmTemplate_3",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_3.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'Boxview-datafactory-dev_ArmTemplate_2')]"
+			]
+		},
+		{
+			"name": "Boxview-datafactory-dev_ArmTemplate_4",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_4.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'Boxview-datafactory-dev_ArmTemplate_3')]"
+			]
+		},
+		{
+			"name": "Boxview-datafactory-dev_ArmTemplate_5",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_5.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'Boxview-datafactory-dev_ArmTemplate_4')]"
+			]
+		},
+		{
+			"name": "Boxview-datafactory-dev_ArmTemplate_6",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_6.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'Boxview-datafactory-dev_ArmTemplate_5')]"
+			]
+		},
+		{
+			"name": "Boxview-datafactory-dev_ArmTemplate_7",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_7.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'Boxview-datafactory-dev_ArmTemplate_6')]"
+			]
+		},
+		{
+			"name": "Boxview-datafactory-dev_ArmTemplate_8",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_8.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"CSS Intermodal Container Trigger_properties_Intermodal Potential Containers To Deliver Dataverse Pipeline_parameters_ForceFullDatasetRefresh": {
+						"value": "[parameters('CSS Intermodal Container Trigger_properties_Intermodal Potential Containers To Deliver Dataverse Pipeline_parameters_ForceFullDatasetRefresh')]"
+					},
+					"CSS Potential Container Trigger_properties_Potential Container To Sell Dataverse Pipeline_parameters_ForceFullDatasetRefresh": {
+						"value": "[parameters('CSS Potential Container Trigger_properties_Potential Container To Sell Dataverse Pipeline_parameters_ForceFullDatasetRefresh')]"
+					},
+					"CSS Potential Container Trigger_properties_Potential Container To Sell Dataverse Pipeline_parameters_ForceUIInputOverride": {
+						"value": "[parameters('CSS Potential Container Trigger_properties_Potential Container To Sell Dataverse Pipeline_parameters_ForceUIInputOverride')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'Boxview-datafactory-dev_ArmTemplate_7')]"
+			]
+		},
+		{
+			"name": "Boxview-datafactory-dev_ArmTemplate_9",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_9.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"CSP Main Schedule Trigger_properties_Master CSP Dataverse Pipeline_parameters_ForceFullDatasetRefresh": {
+						"value": "[parameters('CSP Main Schedule Trigger_properties_Master CSP Dataverse Pipeline_parameters_ForceFullDatasetRefresh')]"
+					},
+					"DMRL Main Schedule Trigger_properties_DMRL Master Pipeline_parameters_ForceDatasetRefresh": {
+						"value": "[parameters('DMRL Main Schedule Trigger_properties_DMRL Master Pipeline_parameters_ForceDatasetRefresh')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'Boxview-datafactory-dev_ArmTemplate_8')]"
+			]
+		}
+	]
+}

@@ -1,0 +1,622 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Pool')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_pool"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Potential_Container_To_Sell')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_containertosale"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Product_Index')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_productindex"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Product_Subtype')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_productsubtype"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Product_Type')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_producttype"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Region')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_region"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Site_CSP')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_site"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Team')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "team"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_ContainerToSell_AlternateSellPool_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Name",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_ContainerToSell_AlternateSellPool_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_ContainerToSell_BreakEvenPrice_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Name",
+						"type": "decimal",
+						"precision": 38,
+						"scale": 6
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_ContainerToSell_BreakEvenPrice_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_ContainerToSell_ClientName_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Name",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_ContainerToSell_ClientName_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_ContainerToSell_ConsigneeName_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Name",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_ContainerToSell_ConsigneeName_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_ContainerToSell_EquipmentGroup_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Group",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_ContainerToSell_EquipmentGroup_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_ContainerToSell_ProductionYear__Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Year",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_ContainerToSell_ProductionYear_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_IntermodalContainer_CountryOfPortEntry_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Actions",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_IntermodalContainer_CountryOfPortEntry_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_IntermodalContainer_DestinationLocationID_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "LocationID",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_IntermodalContainer_DestinationLocationID_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_IntermodalContainer_DropNumber_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Number",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_IntermodalContainer_DropNumber_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_IntermodalContainer_GateBuyActions_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Actions",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_IntermodalContainer_GateBuyActions_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_CSS_IntermodalContainer_Move_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Move",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CSS_IntermodalContainer_Move_Stage"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_dmrl_workorder')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "WorkorderId",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "container_id",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "work_order_id",
+						"type": "varchar"
+					},
+					{
+						"name": "checksum",
+						"type": "varchar"
+					},
+					{
+						"name": "is_sales",
+						"type": "bit"
+					},
+					{
+						"name": "is_surplus",
+						"type": "bit"
+					},
+					{
+						"name": "equipment_size",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "last_move_timestamp",
+						"type": "datetimeoffset",
+						"scale": 7
+					},
+					{
+						"name": "is_empty",
+						"type": "bit"
+					},
+					{
+						"name": "last_move",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "equipment_redelivery_status",
+						"type": "bit"
+					},
+					{
+						"name": "adjusted_MRL",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "adjusted_MRL_box",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "total_cost_with_maersk_parts_usd",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "total_price_not_covered_by_warranty",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "total_cost_under_warranty",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "expiry_date",
+						"type": "datetimeoffset",
+						"scale": 7
+					},
+					{
+						"name": "should_repair",
+						"type": "bit"
+					},
+					{
+						"name": "reasoning_for_rejection",
+						"type": "varchar"
+					},
+					{
+						"name": "urgent",
+						"type": "bit"
+					},
+					{
+						"name": "shop_id",
+						"type": "varchar"
+					},
+					{
+						"name": "cluster_id",
+						"type": "varchar"
+					},
+					{
+						"name": "wolocation_id",
+						"type": "varchar"
+					},
+					{
+						"name": "total_cost_usd",
+						"type": "decimal",
+						"precision": 2,
+						"scale": 0
+					},
+					{
+						"name": "status_description",
+						"type": "varchar"
+					},
+					{
+						"name": "work_order_created_date",
+						"type": "datetimeoffset",
+						"scale": 7
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "DMRL_Workorder"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}

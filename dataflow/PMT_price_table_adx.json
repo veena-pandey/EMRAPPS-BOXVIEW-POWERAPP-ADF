@@ -1,0 +1,36 @@
+{
+	"name": "PMT_price_table_adx",
+	"properties": {
+		"folder": {
+			"name": "PMT"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Blob_PMT_Pricedata_Stage",
+						"type": "DatasetReference"
+					},
+					"name": "StageBlobPMTPricedata"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "boxview_etl_pmt_price_table_Stage",
+						"type": "DatasetReference"
+					},
+					"name": "ASQLPmtPriceTable"
+				}
+			],
+			"transformations": [
+				{
+					"name": "MapDrifted2",
+					"description": "Creates an explicit mapping for each drifted column"
+				}
+			],
+			"script": "source(output(\n\t\tcountry_cd as string,\n\t\tsite_code as string,\n\t\tprice_category as string,\n\t\tprice as integer,\n\t\tprice_compare_at as integer,\n\t\tminimum_price_sales_manager as integer,\n\t\tminimum_price_regional_manager as integer,\n\t\tminimum_price_hq as integer,\n\t\tsurcharge_value as integer,\n\t\tkey_from_inventory as string,\n\t\tedited_at_level as string,\n\t\tedited_timestamp as string,\n\t\tedited_by as string,\n\t\tpool_id as string,\n\t\tsite as string,\n\t\tallowed_for_sale as string,\n\t\tarea as string,\n\t\tteam_name as string,\n\t\tcountry_dsc as string,\n\t\tregional_manager_dry as string,\n\t\tregional_manager_reefer as string,\n\t\tsales_manager_dry as string,\n\t\tsales_manager_reefer as string,\n\t\tsales_operations as string,\n\t\tcustomer_service as string,\n\t\tsales_manager_backup as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['pmt_pricedata']) ~> StageBlobPMTPricedata\nStageBlobPMTPricedata derive(country_cd = toString(byName('country_cd')),\n\t\tsite_code = toString(byName('site_code')),\n\t\tprice_category = toString(byName('price_category')),\n\t\tprice = toInteger(byName('price')),\n\t\tprice_compare_at = toInteger(byName('price_compare_at')),\n\t\tminimum_price_sales_manager = toInteger(byName('minimum_price_sales_manager')),\n\t\tminimum_price_regional_manager = toInteger(byName('minimum_price_regional_manager')),\n\t\tminimum_price_hq = toInteger(byName('minimum_price_hq')),\n\t\tsurcharge_value = toInteger(byName('surcharge_value')),\n\t\tkey_from_inventory = toString(byName('key_from_inventory')),\n\t\tedited_at_level = toInteger(byName('edited_at_level')),\n\t\tedited_timestamp = toString(byName('edited_timestamp')),\n\t\tedited_by = toString(byName('edited_by')),\n\t\tpool_id = toString(byName('pool_id')),\n\t\tsite = toString(byName('site')),\n\t\tallowed_for_sale = toString(byName('allowed_for_sale')),\n\t\tarea = toString(byName('area')),\n\t\tteam_name = toString(byName('team_name')),\n\t\tcountry_dsc = toString(byName('country_dsc')),\n\t\tregional_manager_dry = toString(byName('regional_manager_dry')),\n\t\tregional_manager_reefer = toString(byName('regional_manager_reefer')),\n\t\tsales_manager_dry = toString(byName('sales_manager_dry')),\n\t\tsales_manager_reefer = toString(byName('sales_manager_reefer')),\n\t\tsales_operations = toString(byName('sales_operations')),\n\t\tcustomer_service = toString(byName('customer_service')),\n\t\tsales_manager_backup = toString(byName('sales_manager_backup'))) ~> MapDrifted2\nMapDrifted2 sink(input(\n\t\tcountry_cd as string,\n\t\tsite_code as string,\n\t\tprice_category as string,\n\t\tprice as integer,\n\t\tprice_compare_at as integer,\n\t\tminimum_price_sales_manager as integer,\n\t\tminimum_price_regional_manager as integer,\n\t\tminimum_price_hq as integer,\n\t\tsurcharge_value as integer,\n\t\tkey_from_inventory as string,\n\t\tedited_at_level as string,\n\t\tedited_timestamp as long,\n\t\tedited_by as string,\n\t\tpool_id as string,\n\t\tsite as string,\n\t\tallowed_for_sale as string,\n\t\tarea as string,\n\t\tteam_name as string,\n\t\tcountry_dsc as string,\n\t\tregional_manager_dry as string,\n\t\tregional_manager_reefer as string,\n\t\tsales_manager_dry as string,\n\t\tsales_manager_reefer as string,\n\t\tsales_operations as string,\n\t\tcustomer_service as string,\n\t\tsales_manager_backup as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\ttruncate:true,\n\tformat: 'table',\n\tmapColumn(\n\t\tcountry_cd,\n\t\tsite_code,\n\t\tprice_category,\n\t\tprice,\n\t\tprice_compare_at,\n\t\tminimum_price_sales_manager,\n\t\tminimum_price_regional_manager,\n\t\tminimum_price_hq,\n\t\tsurcharge_value,\n\t\tkey_from_inventory,\n\t\tedited_at_level,\n\t\tedited_timestamp,\n\t\tedited_by,\n\t\tpool_id,\n\t\tsite,\n\t\tallowed_for_sale,\n\t\tarea,\n\t\tteam_name,\n\t\tcountry_dsc,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tsales_operations,\n\t\tcustomer_service,\n\t\tsales_manager_backup\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> ASQLPmtPriceTable"
+		}
+	}
+}

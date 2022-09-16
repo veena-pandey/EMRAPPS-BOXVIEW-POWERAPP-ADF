@@ -1,0 +1,1173 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DMRL Master Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "DMRL Containers",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "DMRL Container dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"ForceFullDatasetRefresh": {
+									"value": "@pipeline().parameters.ForceDatasetRefresh",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "DMRL Workorders",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "DMRL Containers",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "DMRL Workorder dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"ForceFullDatasetRefresh": {
+									"value": "@pipeline().parameters.ForceDatasetRefresh",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"parameters": {
+					"ForceDatasetRefresh": {
+						"type": "bool",
+						"defaultValue": false
+					}
+				},
+				"folder": {
+					"name": "DMRL"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Master CSP Dataverse Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Load Lookup Tables to Blob",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Lookup Tables to Blob",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Product Sub Type data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Cluster data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Product Sub Type Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Product Type data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Product Sub Type data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Product Type Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Product Index data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Product Type data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Product Index Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Country Data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Contact Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Country Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Site Data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load City data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Site Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Contact Data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Product Index data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Contact Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Customer Data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Site Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Customer Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Equipment Inventory CSP Data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Delivery site Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Equipment Inventory CSP dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"ForceFullDatasetRefresh": {
+									"value": "@pipeline().parameters.ForceFullDatasetRefresh",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Load Region data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Lookup Tables to Blob",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Region Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Delivery site Data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Customer Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Delivery Site Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load City data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Pool data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "City Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Area data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Region data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Area Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Cluster data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Area data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Cluster Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Load Pool data",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Load Country Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Pool Dataverse Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					}
+				],
+				"parameters": {
+					"ForceFullDatasetRefresh": {
+						"type": "bool",
+						"defaultValue": false
+					}
+				},
+				"folder": {
+					"name": "CSP"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-04-28T13:23:23Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/pipelines/Site Dataverse Pipeline')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Site Dataverse Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data transformation flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Copy Site Data From ADX To Staging Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Load Site Data To Blob",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Delete Exported folder from blob",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "Copy Site data to Dataverse",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Copy Site data to Dataverse",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data transformation flow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "sitecsp",
+									"wildcardFileName": "*.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DynamicsSink",
+								"writeBatchSize": 10,
+								"writeBehavior": "upsert",
+								"ignoreNullValues": false,
+								"alternateKeyName": "maersk_sitenamekey"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "loc_cd",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_sitecode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "loc_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "lat",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_latitude",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "lon",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_longitude",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "country_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_country",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "pool_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_pool",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "maersk_city"
+										},
+										"sink": {
+											"name": "maersk_city"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_site_csp_intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "boxview_Site_CSP",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy Site CSP data to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Exported folder from blob",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"maersk_site\" >\n    <all-attributes/>\n    <attribute name=\"maersk_poolname\" />\n    <attribute name=\"maersk_sitecode\" />\n    <attribute name=\"maersk_country\" />\n    <attribute name=\"maersk_city\" />\n    <attribute name=\"maersk_siteid\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_countryname\" />\n    <attribute name=\"maersk_pool\" />\n    <attribute name=\"maersk_cityname\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_Site_CSP",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Staging Data folder from blob",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_site_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Copy Site Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Data folder from blob",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Intermediate Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "site",
+								"queryTimeout": "00:10:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_Site",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_site_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Intermediate Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_site_csp_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"folder": {
+					"name": "CSP"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-03T13:56:25Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/dataflows/Load Site Data To Blob')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CSP Main Schedule Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Master CSP Dataverse Pipeline",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"ForceFullDatasetRefresh": false
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2021-05-27T11:00:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"hours": [
+								0,
+								8,
+								16
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/pipelines/Master CSP Dataverse Pipeline')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CSS Intermodal Container Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Intermodal Potential Containers To Deliver Dataverse Pipeline",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"ForceFullDatasetRefresh": false
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2021-05-27T11:00:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"hours": [
+								2,
+								10,
+								16
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CSS Intermodal Container Writeback Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Intermodal Potential Containers To Deliver ADLS_writeback Pipeline",
+							"type": "PipelineReference"
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2021-05-27T11:00:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"minutes": [
+								30
+							],
+							"hours": [
+								2,
+								10,
+								16
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CSS Potential Container Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Potential Container To Sell Dataverse Pipeline",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"ForceFullDatasetRefresh": false,
+							"ForceUIInputOverride": false
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2021-05-27T11:00:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"hours": [
+								3,
+								11,
+								19
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CSS Potential Container Writeback Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Potential Container To Sell ADLS_writeback Pipeline",
+							"type": "PipelineReference"
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2021-05-27T11:00:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"hours": [
+								4,
+								12,
+								20
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DMRL Main Schedule Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "DMRL Master Pipeline",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"ForceDatasetRefresh": false
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2021-05-27T23:00:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"hours": [
+								1,
+								9,
+								15
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/pipelines/DMRL Master Pipeline')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PMT Main Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "PMT_Price_Table_ADX",
+							"type": "PipelineReference"
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2021-05-27T23:00:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"hours": [
+								1,
+								9,
+								15
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PMT Main Writeback Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "PMT Price Table WriteBack_ADLS",
+							"type": "PipelineReference"
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2021-05-27T11:00:00Z",
+						"timeZone": "UTC",
+						"schedule": {
+							"minutes": [
+								30
+							],
+							"hours": [
+								1,
+								9,
+								15
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load Site Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSP"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_site_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobSite"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_country_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "countrydatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_pool_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "pooldatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_city_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "citydatafromdataverse"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobSite",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "LookupCountry"
+						},
+						{
+							"name": "SelectCountry"
+						},
+						{
+							"name": "LookupPool"
+						},
+						{
+							"name": "SelectPool"
+						},
+						{
+							"name": "Lookupcity"
+						},
+						{
+							"name": "SelectCity"
+						}
+					],
+					"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp']) ~> StagingBlobSite\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_countrycode as string,\n\t\tmaersk_countryid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['country/*.parquet']) ~> countrydatafromblob\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_poolid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['pool/*.parquet']) ~> pooldatafromblob\nsource(output(\n\t\tmaersk_cityid as string,\n\t\tmaersk_name as string,\n\t\tmaersk_citycode as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['city/*.parquet']) ~> citydatafromdataverse\nStagingBlobSite derive(loc_cd = trim(toString(byName('loc_cd'))),\n\t\tsite_type = trim(toString(byName('site_type'))),\n\t\tloc_dsc = trim(toString(byName('loc_dsc'))),\n\t\tcountry_cd = trim(toString(byName('country_cd'))),\n\t\tcountry_dsc = trim(toString(byName('country_dsc'))),\n\t\tcity_cd = trim(toString(byName('city_cd'))),\n\t\tcity_dsc = trim(toString(byName('city_dsc'))),\n\t\tcluster_cd = trim(toString(byName('cluster_cd'))),\n\t\tcluster_dsc = trim(toString(byName('cluster_dsc'))),\n\t\tregion_cd = trim(toString(byName('region_cd'))),\n\t\tregion_dsc = trim(toString(byName('region_dsc'))),\n\t\tpool_cd = trim(toString(byName('pool_cd'))),\n\t\tpool_dsc = trim(toString(byName('pool_dsc'))),\n\t\tlopsc_cd = trim(toString(byName('lopsc_cd'))),\n\t\tlopsc_dsc = trim(toString(byName('lopsc_dsc'))),\n\t\tlat = trim(toString(byName('lat'))),\n\t\tlon = trim(toString(byName('lon'))),\n\t\temail_address = trim(toString(byName('email_address'))),\n\t\tphone = trim(toString(byName('phone'))),\n\t\tcontact_person = trim(toString(byName('contact_person'))),\n\t\taddress_1 = trim(toString(byName('address_1'))),\n\t\taddress_2 = trim(toString(byName('address_2'))),\n\t\taddress_3 = trim(toString(byName('address_3'))),\n\t\tpostal_code = trim(toString(byName('postal_code'))),\n\t\tcity_name = trim(toString(byName('city_name'))),\n\t\tlocal_tax = trim(toString(byName('local_tax'))),\n\t\tglobal_tax = trim(toString(byName('global_tax'))),\n\t\teu_tax = trim(toString(byName('eu_tax'))),\n\t\tstate_province_name = trim(toString(byName('state_province_name'))),\n\t\tsales_manager_dry = trim(toString(byName('sales_manager_dry'))),\n\t\tsales_manager_reefer = trim(toString(byName('sales_manager_reefer'))),\n\t\tcustomer_service = trim(toString(byName('customer_service'))),\n\t\tsales_operations = trim(toString(byName('sales_operations')))) ~> DataTransformation\nSelectCity, countrydatafromblob lookup(upper(country_dsc) == upper(maersk_name),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCountry\nLookupCountry select(mapColumn(\n\t\tloc_cd,\n\t\tsite_type,\n\t\tloc_dsc,\n\t\tcountry_cd,\n\t\tcity_cd,\n\t\tcity_dsc,\n\t\tcluster_cd,\n\t\tcluster_dsc,\n\t\tregion_cd,\n\t\tregion_dsc,\n\t\tpool_cd,\n\t\tpool_dsc,\n\t\tlopsc_cd,\n\t\tlopsc_dsc,\n\t\tlat,\n\t\tlon,\n\t\tcity_name,\n\t\tstate_province_name,\n\t\tcountry_dsc = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCountry\nSelectCountry, pooldatafromblob lookup(upper(pool_dsc) == upper(maersk_name),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupPool\nLookupPool select(mapColumn(\n\t\tloc_cd,\n\t\tsite_type,\n\t\tloc_dsc,\n\t\tlat,\n\t\tlon,\n\t\tcountry_dsc,\n\t\tpool_dsc = maersk_poolid,\n\t\tmaersk_city = city_cd\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectPool\nDataTransformation, citydatafromdataverse lookup(upper(city_dsc) == upper(maersk_name),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> Lookupcity\nLookupcity select(mapColumn(\n\t\tloc_cd,\n\t\tsite_type,\n\t\tloc_dsc,\n\t\tcountry_cd,\n\t\tcountry_dsc,\n\t\tcity_cd = maersk_cityid,\n\t\tcity_dsc,\n\t\tcluster_cd,\n\t\tcluster_dsc,\n\t\tregion_cd,\n\t\tregion_dsc,\n\t\tpool_cd,\n\t\tpool_dsc,\n\t\tlopsc_cd,\n\t\tlopsc_dsc,\n\t\tlat,\n\t\tlon,\n\t\temail_address,\n\t\tphone,\n\t\tcontact_person,\n\t\taddress_1,\n\t\taddress_2,\n\t\taddress_3,\n\t\tpostal_code,\n\t\tcity_name,\n\t\tlocal_tax,\n\t\tglobal_tax,\n\t\teu_tax,\n\t\tstate_province_name,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tcustomer_service,\n\t\tsales_operations\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCity\nSelectPool sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobSite"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

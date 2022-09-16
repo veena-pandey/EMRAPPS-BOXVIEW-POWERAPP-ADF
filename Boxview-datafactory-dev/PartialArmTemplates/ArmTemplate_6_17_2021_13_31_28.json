@@ -1,0 +1,105 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/PMT Main Trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "PMT_PriceTable_Master",
+							"type": "PipelineReference"
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Hour",
+						"interval": 1,
+						"startTime": "2021-05-27T23:00:00Z",
+						"timeZone": "UTC"
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load_Potential_Container_To_Sell Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSS"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobPotentialContainerToSell"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dataversedata"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobPotentialcontainerstosell",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "Checksum"
+						},
+						{
+							"name": "RelateTwoDataset"
+						},
+						{
+							"name": "SelectRequiredColumns"
+						},
+						{
+							"name": "FilterRowsWihAllocatedDatePopulated"
+						}
+					],
+					"script": "parameters{\n\tForceFullRefresh as boolean (false()),\n\tForceUIOverride as boolean (false())\n}\nsource(output(\n\t\tcontainer_id as string,\n\t\tdrop_number as string,\n\t\tconsignee_scv_code as string,\n\t\tpool_id as string,\n\t\treg_pool as string,\n\t\teqpno as string,\n\t\tlast_mother_vessel_arrival_time as timestamp,\n\t\tlast_mother_vessel_destination_location_id as string,\n\t\tplace_of_delivery_location_id as string,\n\t\tdestination_arrival_time_utc_expected as timestamp,\n\t\tshipment_id as string,\n\t\tbooking_number as string,\n\t\tbrand as string,\n\t\tequipment_group as string,\n\t\tproduction_year as integer,\n\t\tequipment_own_type as string,\n\t\tdestination_arrival_date as timestamp,\n\t\tdipla_location_id as string,\n\t\tdipla_location_name as string,\n\t\tdestination_location_name as string,\n\t\tconsignee_name as string,\n\t\tlast_rail_dest as string,\n\t\tcarrier_name as string,\n\t\tnext_wonumber as string,\n\t\tnext_carrier_name as string,\n\t\twonumber as string,\n\t\trail_combo as boolean,\n\t\two_number as string,\n\t\ttruck_carrier_name as string,\n\t\tcds_dest as string,\n\t\tregion as string,\n\t\talternate_sell_location as string,\n\t\talternate_sell_pool as string,\n\t\tbreak_even_price_pool as double,\n\t\tbreak_even_price_alt_pool as double,\n\t\tweek as integer,\n\t\thaulage_type as string,\n\t\tpool_allocated_to as string,\n\t\tallocation_date as timestamp,\n\t\tallocated_by as string,\n\t\tallocated_by_algorithm as boolean,\n\t\tdispatch_date as timestamp,\n\t\tdispatch_by as string,\n\t\tweek_loc as string,\n\t\tis_allocated as string,\n\t\tclient_name as string,\n\t\taddress as string,\n\t\temail as string,\n\t\ttype as string,\n\t\tevac_cost_pool as double,\n\t\tevac_cost_alt_pool as double,\n\t\tprimary_composite_key as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['potentialcontainerstosell']) ~> StagingBlobPotentialContainerToSell\nsource(output(\n\t\tcreatedby as string,\n\t\tcreatedbyname as string,\n\t\tcreatedbyyominame as string,\n\t\tcreatedon as timestamp,\n\t\tcreatedonbehalfby as string,\n\t\tcreatedonbehalfbyname as string,\n\t\tcreatedonbehalfbyyominame as string,\n\t\timportsequencenumber as integer,\n\t\tmaersk_address as string,\n\t\tmaersk_allocatedby as string,\n\t\tmaersk_allocatedbyalgorythm as boolean,\n\t\tmaersk_allocateddeallocateddate as timestamp,\n\t\tmaersk_allocationdate as timestamp,\n\t\tmaersk_alternateselllocation as string,\n\t\tmaersk_alternateselllocationname as string,\n\t\tmaersk_alternatesellpool as string,\n\t\tmaersk_alternatesellpoolname as string,\n\t\tmaersk_bookingnumber as string,\n\t\tmaersk_brand as string,\n\t\tmaersk_breakevenpricealtpool as decimal(38,18),\n\t\tmaersk_breakevenpricepool as decimal(38,18),\n\t\tmaersk_carriername as string,\n\t\tmaersk_cdsdestination as string,\n\t\tmaersk_cdsdestinationname as string,\n\t\tmaersk_clientname as string,\n\t\tmaersk_consigneename as string,\n\t\tmaersk_consigneescvcode as string,\n\t\tmaersk_containertosaleid as string,\n\t\tmaersk_datahash as string,\n\t\tmaersk_destinationarrivaldate as timestamp,\n\t\tmaersk_destinationarrivaltimeexpectedutc as timestamp,\n\t\tmaersk_destinationlocationname as string,\n\t\tmaersk_diplalocation as string,\n\t\tmaersk_diplalocationname as string,\n\t\tmaersk_dispatchby as string,\n\t\tmaersk_dispatchdate as timestamp,\n\t\tmaersk_dropnumber as string,\n\t\tmaersk_email as string,\n\t\tmaersk_equipmentgroup as string,\n\t\tmaersk_equipmentowntype as string,\n\t\tmaersk_evaccostaltpool as decimal(38,18),\n\t\tmaersk_evacostpool as decimal(38,18),\n\t\tmaersk_haulagetype as integer,\n\t\tmaersk_isallocated as boolean,\n\t\tmaersk_lastmothervesselarrivaltime as timestamp,\n\t\tmaersk_lastmothervesseldestinationlocation as string,\n\t\tmaersk_lastmothervesseldestinationlocationname as string,\n\t\tmaersk_lastraildestination as string,\n\t\tmaersk_lastraildestinationname as string,\n\t\tmaersk_name as string,\n\t\tmaersk_nextcarriername as string,\n\t\tmaersk_nextwonumber as string,\n\t\tmaersk_pool as string,\n\t\tmaersk_poolallocatedto as string,\n\t\tmaersk_poolallocatedtoname as string,\n\t\tmaersk_poolname as string,\n\t\tmaersk_primarycompositekey as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_railcombo as boolean,\n\t\tmaersk_region as string,\n\t\tmaersk_regpool as string,\n\t\tmaersk_regpoolname as string,\n\t\tmaersk_shipmentid as string,\n\t\tmaersk_truckcarriername as string,\n\t\tmaersk_type as string,\n\t\tmaersk_week as integer,\n\t\tmaersk_weekloc as string,\n\t\tmaersk_wonumber as string,\n\t\tmodifiedby as string,\n\t\tmodifiedbyname as string,\n\t\tmodifiedbyyominame as string,\n\t\tmodifiedon as timestamp,\n\t\tmodifiedonbehalfby as string,\n\t\tmodifiedonbehalfbyname as string,\n\t\tmodifiedonbehalfbyyominame as string,\n\t\toverriddencreatedon as timestamp,\n\t\townerid as string,\n\t\towneridname as string,\n\t\towneridtype as string,\n\t\towneridyominame as string,\n\t\towningbusinessunit as string,\n\t\towningteam as string,\n\t\towninguser as string,\n\t\tstatecode as integer,\n\t\tstatuscode as integer,\n\t\ttimezoneruleversionnumber as integer,\n\t\tutcconversiontimezonecode as integer,\n\t\tversionnumber as long\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['potentialcontainertosell']) ~> dataversedata\nStagingBlobPotentialContainerToSell derive(container_id = trim(toString(byName('container_id'))),\n\t\tdrop_number = trim(toString(byName('drop_number'))),\n\t\tconsignee_scv_code = trim(toString(byName('consignee_scv_code'))),\n\t\tpool_id = trim(toString(byName('pool_id'))),\n\t\treg_pool = trim(toString(byName('reg_pool'))),\n\t\teqpno = trim(toString(byName('eqpno'))),\n\t\tlast_mother_vessel_arrival_time = toTimestamp(byName('last_mother_vessel_arrival_time')),\n\t\tlast_mother_vessel_destination_location_id = trim(toString(byName('last_mother_vessel_destination_location_id'))),\n\t\tplace_of_delivery_location_id = trim(toString(byName('place_of_delivery_location_id'))),\n\t\tdestination_arrival_time_utc_expected = toTimestamp(byName('destination_arrival_time_utc_expected')),\n\t\tshipment_id = trim(toString(byName('shipment_id'))),\n\t\tbooking_number = trim(toString(byName('booking_number'))),\n\t\tbrand = trim(toString(byName('brand'))),\n\t\tequipment_group = trim(toString(byName('equipment_group'))),\n\t\tproduction_year = trim(toString(byName('production_year'))),\n\t\tequipment_own_type = trim(toString(byName('equipment_own_type'))),\n\t\tdestination_arrival_date = toTimestamp(byName('destination_arrival_date')),\n\t\tdipla_location_id = trim(toString(byName('dipla_location_id'))),\n\t\tdipla_location_name = trim(toString(byName('dipla_location_name'))),\n\t\tdestination_location_name = trim(toString(byName('destination_location_name'))),\n\t\tconsignee_name = trim(toString(byName('consignee_name'))),\n\t\tlast_rail_dest = trim(toString(byName('last_rail_dest'))),\n\t\tcarrier_name = trim(toString(byName('carrier_name'))),\n\t\tnext_wonumber = trim(toString(byName('next_wonumber'))),\n\t\tnext_carrier_name = trim(toString(byName('next_carrier_name'))),\n\t\twonumber = trim(toString(byName('wonumber'))),\n\t\trail_combo = toBoolean(case(upper(trim(toString(byName('rail_combo'))))=='TRUE',\"1\",\"0\")),\n\t\two_number = trim(toString(byName('wo_number'))),\n\t\ttruck_carrier_name = trim(toString(byName('truck_carrier_name'))),\n\t\tcds_dest = trim(toString(byName('cds_dest'))),\n\t\tregion = trim(toString(byName('region'))),\n\t\talternate_sell_location = trim(toString(byName('alternate_sell_location'))),\n\t\talternate_sell_pool = trim(toString(byName('alternate_sell_pool'))),\n\t\tbreak_even_price_pool = toDouble(trim(toString(byName('break_even_price_pool')))),\n\t\tbreak_even_price_alt_pool = toDouble(trim(toString(byName('break_even_price_alt_pool')))),\n\t\tweek = toInteger(trim(toString(byName('week')))),\n\t\thaulage_type = case(trim(toString(byName('haulage_type')))=='Carrier Haulage',379430000,\r\n    case(trim(toString(byName('haulage_type')))=='Merchant Haulage',379430001)),\n\t\tpool_allocated_to = trim(toString(byName('pool_allocated_to'))),\n\t\tallocation_date = toTimestamp(byName('allocation_date')),\n\t\tallocated_by = trim(toString(byName('allocated_by'))),\n\t\tallocated_by_algorithm = toBoolean(case(upper(trim(toString(byName('allocated_by_algorithm'))))=='TRUE',\"1\",\"0\")),\n\t\tdispatch_date = toTimestamp(byName('dispatch_date')),\n\t\tdispatch_by = trim(toString(byName('dispatch_by'))),\n\t\tweek_loc = trim(toString(byName('week_loc'))),\n\t\tis_allocated = toBoolean(case(upper(trim(toString(byName('is_allocated'))))=='YES',\"1\",\"0\")),\n\t\tclient_name = trim(toString(byName('client_name'))),\n\t\taddress = trim(toString(byName('address'))),\n\t\temail = trim(toString(byName('email'))),\n\t\ttype = trim(toString(byName('type'))),\n\t\tevac_cost_pool = toDecimal(trim(toString(byName('evac_cost_pool')))),\n\t\tevac_cost_alt_pool = toDecimal(trim(toString(byName('evac_cost_alt_pool')))),\n\t\tprimary_composite_key = trim(toString(byName('primary_composite_key')))) ~> DataTransformation\nDataTransformation derive(checksum = sha1(columns())) ~> Checksum\nChecksum, dataversedata join(container_id == maersk_name,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> RelateTwoDataset\nFilterRowsWihAllocatedDatePopulated select(mapColumn(\n\t\tcontainer_id,\n\t\tdrop_number,\n\t\tconsignee_scv_code,\n\t\teqpno,\n\t\tlast_mother_vessel_arrival_time,\n\t\tdestination_arrival_time_utc_expected,\n\t\tshipment_id,\n\t\tbooking_number,\n\t\tbrand,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tequipment_own_type,\n\t\tdestination_arrival_date,\n\t\tdipla_location_name,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tcarrier_name,\n\t\tnext_wonumber,\n\t\tnext_carrier_name,\n\t\twonumber,\n\t\trail_combo,\n\t\two_number,\n\t\ttruck_carrier_name,\n\t\tregion,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\tweek,\n\t\thaulage_type,\n\t\tallocation_date,\n\t\tallocated_by,\n\t\tallocated_by_algorithm,\n\t\tdispatch_date,\n\t\tdispatch_by,\n\t\tweek_loc,\n\t\tis_allocated,\n\t\tclient_name,\n\t\taddress,\n\t\temail,\n\t\ttype,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tprimary_composite_key,\n\t\tdipla_location_id,\n\t\tlast_rail_dest,\n\t\tcds_dest,\n\t\tlast_mother_vessel_destination_location_id,\n\t\talternate_sell_location,\n\t\tplace_of_delivery_location_id,\n\t\tpool_id,\n\t\treg_pool,\n\t\talternate_sell_pool,\n\t\tpool_allocated_to,\n\t\tchecksum\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumns\nRelateTwoDataset filter(case($ForceUIOverride==true(), case($ForceFullRefresh==true(), true(), case(maersk_datahash==checksum, false(), true())) , case(isNull(maersk_allocateddeallocateddate), case($ForceFullRefresh==true(), true(), case(maersk_datahash==checksum, false(), true())),false()))) ~> FilterRowsWihAllocatedDatePopulated\nSelectRequiredColumns sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobPotentialcontainerstosell"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

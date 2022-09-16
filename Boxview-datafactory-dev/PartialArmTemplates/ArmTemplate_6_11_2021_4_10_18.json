@@ -1,0 +1,89 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Load DMRL Workorder Data To Blob SQL')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "DMRL"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobDMRLWorkorderSnapshot"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLSQLWorkorder_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dmrlworkordersqlData"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dmrlcontainerdatafromblob"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLSQLWorkorder_Intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobDMRLWorkorder",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "checksum"
+						},
+						{
+							"name": "LookupDMRLContainerId"
+						},
+						{
+							"name": "SelectDMRLContainerId"
+						},
+						{
+							"name": "RelateTwoDataSets"
+						},
+						{
+							"name": "FilterOnlyNewRows"
+						},
+						{
+							"name": "SelectRequiredColumnsWithChecksum"
+						}
+					],
+					"script": "parameters{\n\tForceFullRefresh as boolean (false())\n}\nsource(output(\n\t\twork_order_id as string,\n\t\tcontainer_id as string,\n\t\tis_sales as boolean,\n\t\tis_surplus as boolean,\n\t\tequipment_size as string,\n\t\tlocation_id as string,\n\t\tlast_move_timestamp as timestamp,\n\t\tis_empty as boolean,\n\t\tlast_move as string,\n\t\tequipment_redelivery_status as boolean,\n\t\tadjusted_MRL as decimal(38,18),\n\t\tadjusted_MRL_box as decimal(38,18),\n\t\ttotal_cost_with_maersk_parts_usd as double,\n\t\ttotal_price_not_covered_by_warranty as double,\n\t\ttotal_cost_under_warranty as double,\n\t\texpiry_date as string,\n\t\tshould_repair as boolean,\n\t\treasoning_for_rejection as string,\n\t\twork_order_created_date as timestamp,\n\t\turgent as boolean,\n\t\tshop_id as string,\n\t\tcluster_id as string,\n\t\twolocation_id as string,\n\t\ttotal_cost_usd as double,\n\t\tstatus_description as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlworkorder']) ~> StagingBlobDMRLWorkorderSnapshot\nsource(output(\n\t\tWorkorderId as string,\n\t\tcontainer_id as string,\n\t\twork_order_id as string,\n\t\tchecksum as string,\n\t\tis_sales as boolean,\n\t\tis_surplus as boolean,\n\t\tequipment_size as integer,\n\t\tlast_move_timestamp as timestamp,\n\t\tis_empty as boolean,\n\t\tlast_move as integer,\n\t\tequipment_redelivery_status as boolean,\n\t\tadjusted_MRL as integer,\n\t\tadjusted_MRL_box as integer,\n\t\ttotal_cost_with_maersk_parts_usd as integer,\n\t\ttotal_price_not_covered_by_warranty as integer,\n\t\ttotal_cost_under_warranty as integer,\n\t\texpiry_date as timestamp,\n\t\tshould_repair as boolean,\n\t\treasoning_for_rejection as string,\n\t\turgent as boolean,\n\t\tshop_id as string,\n\t\tcluster_id as string,\n\t\twolocation_id as string,\n\t\ttotal_cost_usd as decimal(2,0),\n\t\tstatus_description as string,\n\t\twork_order_created_date as timestamp\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlsqlworkorder']) ~> dmrlworkordersqlData\nsource(output(\n\t\tmaersk_reasoning as string,\n\t\tmaersk_location as string,\n\t\tmaersk_dmrlcontainerid as string,\n\t\tmaersk_mrlbox as integer,\n\t\tmaersk_equipmentmanufacturer as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_issurplus as boolean,\n\t\tmaersk_name as string,\n\t\tmaersk_issales as boolean,\n\t\tmaersk_mrlunit as integer,\n\t\tmaersk_damageprediction as double,\n\t\tmaersk_containertype as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlcontainer']) ~> dmrlcontainerdatafromblob\nStagingBlobDMRLWorkorderSnapshot derive(work_order_id = trim(toString(byName('work_order_id'))),\n\t\tcontainer_id = trim(toString(byName('container_id'))),\n\t\tis_sales = byName('is_sales'),\n\t\tis_surplus = byName('is_surplus'),\n\t\tequipment_size = case(toInteger(byName('equipment_size'))==20,379430000,\r\n    case(toInteger(byName('equipment_size'))==40,379430001,\r\n        case(toInteger(byName('equipment_size'))==45,379430002))),\n\t\twolocation_id = trim(toString(byName('location_id'))),\n\t\tlast_move_timestamp = toTimestamp(toString(byName('last_move_timestamp'))),\n\t\tis_empty = byName('is_empty'),\n\t\tlast_move = case(trim(toString(byName('last_move')))=='GATE-IN',379430000,\r\n    case(trim(toString(byName('last_move')))=='GATE-OUT',379430001,\r\n        case(trim(toString(byName('last_move')))=='DISCHARG',379430002,\r\n            case(trim(toString(byName('last_move')))=='LOAD',379430003,\r\n                case(trim(toString(byName('last_move')))=='ON-RAIL',379430004,\r\n                    case(trim(toString(byName('last_move')))=='OFF-RAIL',379430005,\r\n                        case(trim(toString(byName('last_move')))=='STRIPPIN',379430006))))))),\n\t\tequipment_redelivery_status = byName('equipment_redelivery_status'),\n\t\tadjusted_MRL = toInteger(byName('adjusted_MRL')),\n\t\tadjusted_MRL_box = toInteger(byName('adjusted_MRL_box')),\n\t\ttotal_cost_with_maersk_parts_usd = toInteger(byName('total_cost_with_maersk_parts_usd')),\n\t\ttotal_price_not_covered_by_warranty = toInteger(byName('total_price_not_covered_by_warranty')),\n\t\ttotal_cost_under_warranty = toInteger(byName('total_cost_under_warranty')),\n\t\texpiry_date = toTimestamp(toString(byName('expiry_date')),'yyyy-mm-dd'),\n\t\tshould_repair = byName('should_repair'),\n\t\treasoning_for_rejection = trim(toString(byName('reasoning_for_rejection'))),\n\t\twork_order_created_date = toTimestamp(toString(byName('work_order_created_date'))),\n\t\turgent = byName('urgent'),\n\t\tshop_id = trim(toString(byName('shop_id'))),\n\t\tcluster_id = trim(toString(byName('cluster_id'))),\n\t\ttotal_cost_usd = toFloat(byName('total_cost_usd')),\n\t\tstatus_description = trim(toString(byName('status_description')))) ~> DataTransformation\nSelectDMRLContainerId derive(checksum_new = sha1(work_order_id,container_id,is_sales,is_surplus,equipment_size,last_move_timestamp,is_empty,last_move,equipment_redelivery_status,adjusted_MRL,adjusted_MRL_box,total_cost_with_maersk_parts_usd,total_price_not_covered_by_warranty,total_cost_under_warranty,expiry_date,should_repair,reasoning_for_rejection,work_order_created_date,urgent,shop_id,cluster_id, wolocation_id,total_cost_usd)) ~> checksum\nDataTransformation, dmrlcontainerdatafromblob lookup(container_id == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupDMRLContainerId\nLookupDMRLContainerId select(mapColumn(\n\t\twork_order_id,\n\t\tcontainer_id = maersk_dmrlcontainerid,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlast_move_timestamp,\n\t\tis_empty,\n\t\tlast_move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\tshould_repair,\n\t\treasoning_for_rejection,\n\t\twork_order_created_date,\n\t\turgent,\n\t\tshop_id,\n\t\tcluster_id,\n\t\twolocation_id,\n\t\ttotal_cost_usd,\n\t\tstatus_description\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectDMRLContainerId\nchecksum, dmrlworkordersqlData join(SelectDMRLContainerId@work_order_id == SelectDMRLContainerId@work_order_id,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> RelateTwoDataSets\nRelateTwoDataSets filter(case($ForceFullRefresh==true(), true(), case(checksum==checksum_new, false(), true()))) ~> FilterOnlyNewRows\nFilterOnlyNewRows select(mapColumn(\n\t\twork_order_id = SelectDMRLContainerId@work_order_id,\n\t\tcontainer_id = SelectDMRLContainerId@container_id,\n\t\tis_sales = SelectDMRLContainerId@is_sales,\n\t\tis_surplus = SelectDMRLContainerId@is_surplus,\n\t\tequipment_size = SelectDMRLContainerId@equipment_size,\n\t\tlast_move_timestamp = SelectDMRLContainerId@last_move_timestamp,\n\t\tis_empty = SelectDMRLContainerId@is_empty,\n\t\tlast_move = SelectDMRLContainerId@last_move,\n\t\tequipment_redelivery_status = SelectDMRLContainerId@equipment_redelivery_status,\n\t\tadjusted_MRL = SelectDMRLContainerId@adjusted_MRL,\n\t\tadjusted_MRL_box = SelectDMRLContainerId@adjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd = SelectDMRLContainerId@total_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty = SelectDMRLContainerId@total_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty = SelectDMRLContainerId@total_cost_under_warranty,\n\t\texpiry_date = SelectDMRLContainerId@expiry_date,\n\t\tshould_repair = SelectDMRLContainerId@should_repair,\n\t\treasoning_for_rejection = SelectDMRLContainerId@reasoning_for_rejection,\n\t\twork_order_created_date = SelectDMRLContainerId@work_order_created_date,\n\t\turgent = SelectDMRLContainerId@urgent,\n\t\tshop_id = SelectDMRLContainerId@shop_id,\n\t\tcluster_id = SelectDMRLContainerId@cluster_id,\n\t\twolocation_id = SelectDMRLContainerId@wolocation_id,\n\t\ttotal_cost_usd = SelectDMRLContainerId@total_cost_usd,\n\t\tstatus_description = SelectDMRLContainerId@status_description,\n\t\tchecksum = checksum_new\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumnsWithChecksum\nSelectRequiredColumnsWithChecksum sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobDMRLWorkorder"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

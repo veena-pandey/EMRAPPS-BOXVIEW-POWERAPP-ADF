@@ -1,0 +1,1202 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Potential Container To Sell Dataverse Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data transformation flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Export PotentialContainer Data From Dataverse to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Load_Potential_Container_To_Sell Data To Blob",
+								"type": "DataFlowReference",
+								"parameters": {
+									"ForceFullRefresh": {
+										"value": "@pipeline().parameters.ForceFullDatasetRefresh",
+										"type": "Expression"
+									},
+									"ForceUIOverride": {
+										"value": "@pipeline().parameters.ForceUIInputOverride",
+										"type": "Expression"
+									}
+								}
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "PotentialContainer Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Intermediate Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Dataverse Exported Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "potential_containers_to_sell_hubble",
+								"queryTimeout": "00:10:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_PotentialContainerToSell",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_potentialcontainertosell_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Staging Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Intermediate Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Export PotentialContainer Data From Dataverse to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "PotentialContainer Data From ADX To Staging Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch mapping=\"logical\" distinct=\"false\">\n  <entity name=\"maersk_containertosale\">\n    <attribute name=\"maersk_containertosaleid\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_datahash\" />\n\t<attribute name=\"maersk_allocateddeallocateddate\" />\t\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_Potential_Container_To_Sell",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_potentialcontainertosell_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Dataverse Exported Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Copy Potential Container To Sell data to Dataverse",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data transformation flow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "potentialcontainertosell",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DynamicsSink",
+								"writeBatchSize": 10,
+								"writeBehavior": "upsert",
+								"ignoreNullValues": false,
+								"alternateKeyName": "maersk_containeridkey"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "container_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "drop_number",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_dropnumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "consignee_scv_code",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_consigneescvcode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "last_mother_vessel_arrival_time",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_lastmothervesselarrivaltime",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "destination_arrival_time_utc_expected",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_destinationarrivaltimeexpectedutc",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "shipment_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_shipmentid",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "booking_number",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_bookingnumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "brand",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_brand",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_group",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentgroup",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "production_year",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_productionyear",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_own_type",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentowntype",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "destination_arrival_date",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_destinationarrivaldate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "dipla_location_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_cssdiplalocationname"
+										}
+									},
+									{
+										"source": {
+											"name": "destination_location_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_destinationlocationname",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "consignee_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_consigneename",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "carrier_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_carriername",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "next_wonumber",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_nextwonumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "next_carrier_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_nextcarriername",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "wonumber",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_wonumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "rail_combo",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_railcombo",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "truck_carrier_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_truckcarriername",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "region",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_region",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "break_even_price_pool",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										},
+										"sink": {
+											"name": "maersk_breakevenpricepool",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "break_even_price_alt_pool",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										},
+										"sink": {
+											"name": "maersk_breakevenpricealtpool",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "week",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_week",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "haulage_type",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_haulagetype",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "allocation_date",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_allocationdate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "allocated_by",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_allocatedby",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "allocated_by_algorithm",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_allocatedbyalgorythm",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "dispatch_date",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_dispatchdate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "dispatch_by",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_dispatchby",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "week_loc",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_weekloc",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "is_allocated",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_isallocated",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "client_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_clientname",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "address",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_address",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "email",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_email",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "type",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_type",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "evac_cost_pool",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										},
+										"sink": {
+											"name": "maersk_evacostpool",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "evac_cost_alt_pool",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										},
+										"sink": {
+											"name": "maersk_evaccostaltpool",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "primary_composite_key",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_primarycompositekey",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "dipla_location_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_cssdiplalocation"
+										}
+									},
+									{
+										"source": {
+											"name": "last_rail_dest",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_csslastraildestination"
+										}
+									},
+									{
+										"source": {
+											"name": "cds_dest",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_csscdsdestination"
+										}
+									},
+									{
+										"source": {
+											"name": "last_mother_vessel_destination_location_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_csslastmothervesseldestinationlocation"
+										}
+									},
+									{
+										"source": {
+											"name": "alternate_sell_location",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_cssalternateselllocation"
+										}
+									},
+									{
+										"source": {
+											"name": "place_of_delivery_location_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_cssplaceofdeliverylocation"
+										}
+									},
+									{
+										"source": {
+											"name": "pool_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_poolcode"
+										}
+									},
+									{
+										"source": {
+											"name": "reg_pool",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_cssregpool"
+										}
+									},
+									{
+										"source": {
+											"name": "alternate_sell_pool",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_cssalternatesellpool"
+										}
+									},
+									{
+										"source": {
+											"name": "pool_allocated_to",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_csspoolallocatedto"
+										}
+									},
+									{
+										"source": {
+											"name": "checksum",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_datahash",
+											"type": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_potentialcontainertosell_intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "boxview_Potential_Container_To_Sell",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "CopytoSQLClientName",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data transformation flow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "potentialcontainertosell",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "client_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "Name",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_potentialcontainertosell_intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "boxview_etl_CSS_ContainerToSell_ClientName_Stage",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "CopytoSQLProductionYear",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data transformation flow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "potentialcontainertosell",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "production_year",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "Year",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_potentialcontainertosell_intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "boxview_etl_CSS_ContainerToSell_ProductionYear__Stage",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "CopytoSQLEquipmentGroup",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data transformation flow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "potentialcontainertosell",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "equipment_group",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "Group",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_potentialcontainertosell_intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "boxview_etl_CSS_ContainerToSell_EquipmentGroup_Stage",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Get Distinct Values",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "CopytoSQLClientName",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "CopytoSQLProductionYear",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "CopytoSQLEquipmentGroup",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[CSS_ContainerToSell_GetDistinctValues]"
+						},
+						"linkedServiceName": {
+							"referenceName": "boxview_asql",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"parameters": {
+					"ForceFullDatasetRefresh": {
+						"type": "bool",
+						"defaultValue": false
+					},
+					"ForceUIInputOverride": {
+						"type": "bool",
+						"defaultValue": false
+					}
+				},
+				"folder": {
+					"name": "CSS"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-12T07:26:47Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/dataflows/Load_Potential_Container_To_Sell Data To Blob')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load_Potential_Container_To_Sell Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSS"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobPotentialContainerToSell"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dataversedata"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobPotentialcontainerstosell",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "Checksum"
+						},
+						{
+							"name": "RelateTwoDataset"
+						},
+						{
+							"name": "FilterNewRows"
+						},
+						{
+							"name": "SelectRequiredColumns"
+						},
+						{
+							"name": "FilterRowsWihAllocatedDatePopulated"
+						}
+					],
+					"script": "parameters{\n\tForceFullRefresh as boolean (false()),\n\tForceUIOverride as boolean (false())\n}\nsource(output(\n\t\tcontainer_id as string,\n\t\tdrop_number as string,\n\t\tconsignee_scv_code as string,\n\t\tpool_id as string,\n\t\treg_pool as string,\n\t\teqpno as string,\n\t\tlast_mother_vessel_arrival_time as timestamp,\n\t\tlast_mother_vessel_destination_location_id as string,\n\t\tplace_of_delivery_location_id as string,\n\t\tdestination_arrival_time_utc_expected as timestamp,\n\t\tshipment_id as string,\n\t\tbooking_number as string,\n\t\tbrand as string,\n\t\tequipment_group as string,\n\t\tproduction_year as integer,\n\t\tequipment_own_type as string,\n\t\tdestination_arrival_date as timestamp,\n\t\tdipla_location_id as string,\n\t\tdipla_location_name as string,\n\t\tdestination_location_name as string,\n\t\tconsignee_name as string,\n\t\tlast_rail_dest as string,\n\t\tcarrier_name as string,\n\t\tnext_wonumber as string,\n\t\tnext_carrier_name as string,\n\t\twonumber as string,\n\t\trail_combo as boolean,\n\t\two_number as string,\n\t\ttruck_carrier_name as string,\n\t\tcds_dest as string,\n\t\tregion as string,\n\t\talternate_sell_location as string,\n\t\talternate_sell_pool as string,\n\t\tbreak_even_price_pool as double,\n\t\tbreak_even_price_alt_pool as double,\n\t\tweek as integer,\n\t\thaulage_type as string,\n\t\tpool_allocated_to as string,\n\t\tallocation_date as timestamp,\n\t\tallocated_by as string,\n\t\tallocated_by_algorithm as boolean,\n\t\tdispatch_date as timestamp,\n\t\tdispatch_by as string,\n\t\tweek_loc as string,\n\t\tis_allocated as string,\n\t\tclient_name as string,\n\t\taddress as string,\n\t\temail as string,\n\t\ttype as string,\n\t\tevac_cost_pool as double,\n\t\tevac_cost_alt_pool as double,\n\t\tprimary_composite_key as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['potentialcontainerstosell']) ~> StagingBlobPotentialContainerToSell\nsource(output(\n\t\tcreatedby as string,\n\t\tcreatedbyname as string,\n\t\tcreatedbyyominame as string,\n\t\tcreatedon as timestamp,\n\t\tcreatedonbehalfby as string,\n\t\tcreatedonbehalfbyname as string,\n\t\tcreatedonbehalfbyyominame as string,\n\t\timportsequencenumber as integer,\n\t\tmaersk_address as string,\n\t\tmaersk_allocatedby as string,\n\t\tmaersk_allocatedbyalgorythm as boolean,\n\t\tmaersk_allocateddeallocateddate as timestamp,\n\t\tmaersk_allocationdate as timestamp,\n\t\tmaersk_alternateselllocation as string,\n\t\tmaersk_alternateselllocationname as string,\n\t\tmaersk_alternatesellpool as string,\n\t\tmaersk_alternatesellpoolname as string,\n\t\tmaersk_bookingnumber as string,\n\t\tmaersk_brand as string,\n\t\tmaersk_breakevenpricealtpool as decimal(38,18),\n\t\tmaersk_breakevenpricepool as decimal(38,18),\n\t\tmaersk_carriername as string,\n\t\tmaersk_cdsdestination as string,\n\t\tmaersk_cdsdestinationname as string,\n\t\tmaersk_clientname as string,\n\t\tmaersk_consigneename as string,\n\t\tmaersk_consigneescvcode as string,\n\t\tmaersk_containertosaleid as string,\n\t\tmaersk_datahash as string,\n\t\tmaersk_destinationarrivaldate as timestamp,\n\t\tmaersk_destinationarrivaltimeexpectedutc as timestamp,\n\t\tmaersk_destinationlocationname as string,\n\t\tmaersk_diplalocation as string,\n\t\tmaersk_diplalocationname as string,\n\t\tmaersk_dispatchby as string,\n\t\tmaersk_dispatchdate as timestamp,\n\t\tmaersk_dropnumber as string,\n\t\tmaersk_email as string,\n\t\tmaersk_equipmentgroup as string,\n\t\tmaersk_equipmentowntype as string,\n\t\tmaersk_evaccostaltpool as decimal(38,18),\n\t\tmaersk_evacostpool as decimal(38,18),\n\t\tmaersk_haulagetype as integer,\n\t\tmaersk_isallocated as boolean,\n\t\tmaersk_lastmothervesselarrivaltime as timestamp,\n\t\tmaersk_lastmothervesseldestinationlocation as string,\n\t\tmaersk_lastmothervesseldestinationlocationname as string,\n\t\tmaersk_lastraildestination as string,\n\t\tmaersk_lastraildestinationname as string,\n\t\tmaersk_name as string,\n\t\tmaersk_nextcarriername as string,\n\t\tmaersk_nextwonumber as string,\n\t\tmaersk_pool as string,\n\t\tmaersk_poolallocatedto as string,\n\t\tmaersk_poolallocatedtoname as string,\n\t\tmaersk_poolname as string,\n\t\tmaersk_primarycompositekey as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_railcombo as boolean,\n\t\tmaersk_region as string,\n\t\tmaersk_regpool as string,\n\t\tmaersk_regpoolname as string,\n\t\tmaersk_shipmentid as string,\n\t\tmaersk_truckcarriername as string,\n\t\tmaersk_type as string,\n\t\tmaersk_week as integer,\n\t\tmaersk_weekloc as string,\n\t\tmaersk_wonumber as string,\n\t\tmodifiedby as string,\n\t\tmodifiedbyname as string,\n\t\tmodifiedbyyominame as string,\n\t\tmodifiedon as timestamp,\n\t\tmodifiedonbehalfby as string,\n\t\tmodifiedonbehalfbyname as string,\n\t\tmodifiedonbehalfbyyominame as string,\n\t\toverriddencreatedon as timestamp,\n\t\townerid as string,\n\t\towneridname as string,\n\t\towneridtype as string,\n\t\towneridyominame as string,\n\t\towningbusinessunit as string,\n\t\towningteam as string,\n\t\towninguser as string,\n\t\tstatecode as integer,\n\t\tstatuscode as integer,\n\t\ttimezoneruleversionnumber as integer,\n\t\tutcconversiontimezonecode as integer,\n\t\tversionnumber as long\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['potentialcontainertosell']) ~> dataversedata\nStagingBlobPotentialContainerToSell derive(container_id = trim(toString(byName('container_id'))),\n\t\tdrop_number = trim(toString(byName('drop_number'))),\n\t\tconsignee_scv_code = trim(toString(byName('consignee_scv_code'))),\n\t\tpool_id = trim(toString(byName('pool_id'))),\n\t\treg_pool = trim(toString(byName('reg_pool'))),\n\t\teqpno = trim(toString(byName('eqpno'))),\n\t\tlast_mother_vessel_arrival_time = toTimestamp(byName('last_mother_vessel_arrival_time')),\n\t\tlast_mother_vessel_destination_location_id = trim(toString(byName('last_mother_vessel_destination_location_id'))),\n\t\tplace_of_delivery_location_id = trim(toString(byName('place_of_delivery_location_id'))),\n\t\tdestination_arrival_time_utc_expected = toTimestamp(byName('destination_arrival_time_utc_expected')),\n\t\tshipment_id = trim(toString(byName('shipment_id'))),\n\t\tbooking_number = trim(toString(byName('booking_number'))),\n\t\tbrand = trim(toString(byName('brand'))),\n\t\tequipment_group = trim(toString(byName('equipment_group'))),\n\t\tproduction_year = trim(toString(byName('production_year'))),\n\t\tequipment_own_type = trim(toString(byName('equipment_own_type'))),\n\t\tdestination_arrival_date = toTimestamp(byName('destination_arrival_date')),\n\t\tdipla_location_id = trim(toString(byName('dipla_location_id'))),\n\t\tdipla_location_name = trim(toString(byName('dipla_location_name'))),\n\t\tdestination_location_name = trim(toString(byName('destination_location_name'))),\n\t\tconsignee_name = trim(toString(byName('consignee_name'))),\n\t\tlast_rail_dest = trim(toString(byName('last_rail_dest'))),\n\t\tcarrier_name = trim(toString(byName('carrier_name'))),\n\t\tnext_wonumber = trim(toString(byName('next_wonumber'))),\n\t\tnext_carrier_name = trim(toString(byName('next_carrier_name'))),\n\t\twonumber = trim(toString(byName('wonumber'))),\n\t\trail_combo = toBoolean(case(upper(trim(toString(byName('rail_combo'))))=='TRUE',\"1\",\"0\")),\n\t\two_number = trim(toString(byName('wo_number'))),\n\t\ttruck_carrier_name = trim(toString(byName('truck_carrier_name'))),\n\t\tcds_dest = trim(toString(byName('cds_dest'))),\n\t\tregion = trim(toString(byName('region'))),\n\t\talternate_sell_location = trim(toString(byName('alternate_sell_location'))),\n\t\talternate_sell_pool = trim(toString(byName('alternate_sell_pool'))),\n\t\tbreak_even_price_pool = toDouble(trim(toString(byName('break_even_price_pool')))),\n\t\tbreak_even_price_alt_pool = toDouble(trim(toString(byName('break_even_price_alt_pool')))),\n\t\tweek = toInteger(trim(toString(byName('week')))),\n\t\thaulage_type = case(trim(toString(byName('haulage_type')))=='Carrier Haulage',379430000,\r\n    case(trim(toString(byName('haulage_type')))=='Merchant Haulage',379430001)),\n\t\tpool_allocated_to = trim(toString(byName('pool_allocated_to'))),\n\t\tallocation_date = toTimestamp(byName('allocation_date')),\n\t\tallocated_by = trim(toString(byName('allocated_by'))),\n\t\tallocated_by_algorithm = toBoolean(case(upper(trim(toString(byName('allocated_by_algorithm'))))=='TRUE',\"1\",\"0\")),\n\t\tdispatch_date = toTimestamp(byName('dispatch_date')),\n\t\tdispatch_by = trim(toString(byName('dispatch_by'))),\n\t\tweek_loc = trim(toString(byName('week_loc'))),\n\t\tis_allocated = toBoolean(case(upper(trim(toString(byName('is_allocated'))))=='Yes',\"1\",\"0\")),\n\t\tclient_name = trim(toString(byName('client_name'))),\n\t\taddress = trim(toString(byName('address'))),\n\t\temail = trim(toString(byName('email'))),\n\t\ttype = trim(toString(byName('type'))),\n\t\tevac_cost_pool = toDecimal(trim(toString(byName('evac_cost_pool')))),\n\t\tevac_cost_alt_pool = toDecimal(trim(toString(byName('evac_cost_alt_pool')))),\n\t\tprimary_composite_key = trim(toString(byName('primary_composite_key')))) ~> DataTransformation\nDataTransformation derive(checksum = sha1(columns())) ~> Checksum\nChecksum, dataversedata join(container_id == maersk_name,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> RelateTwoDataset\nFilterRowsWihAllocatedDatePopulated filter(case($ForceFullRefresh==true(), true(), case(maersk_datahash==checksum, false(), true()))) ~> FilterNewRows\nFilterNewRows select(mapColumn(\n\t\tcontainer_id,\n\t\tdrop_number,\n\t\tconsignee_scv_code,\n\t\teqpno,\n\t\tlast_mother_vessel_arrival_time,\n\t\tdestination_arrival_time_utc_expected,\n\t\tshipment_id,\n\t\tbooking_number,\n\t\tbrand,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tequipment_own_type,\n\t\tdestination_arrival_date,\n\t\tdipla_location_name,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tcarrier_name,\n\t\tnext_wonumber,\n\t\tnext_carrier_name,\n\t\twonumber,\n\t\trail_combo,\n\t\two_number,\n\t\ttruck_carrier_name,\n\t\tregion,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\tweek,\n\t\thaulage_type,\n\t\tallocation_date,\n\t\tallocated_by,\n\t\tallocated_by_algorithm,\n\t\tdispatch_date,\n\t\tdispatch_by,\n\t\tweek_loc,\n\t\tis_allocated,\n\t\tclient_name,\n\t\taddress,\n\t\temail,\n\t\ttype,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tprimary_composite_key,\n\t\tdipla_location_id,\n\t\tlast_rail_dest,\n\t\tcds_dest,\n\t\tlast_mother_vessel_destination_location_id,\n\t\talternate_sell_location,\n\t\tplace_of_delivery_location_id,\n\t\tpool_id,\n\t\treg_pool,\n\t\talternate_sell_pool,\n\t\tpool_allocated_to,\n\t\tchecksum\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumns\nRelateTwoDataset filter(case($ForceUIOverride==true(), true(), isNull(maersk_allocateddeallocateddate))) ~> FilterRowsWihAllocatedDatePopulated\nSelectRequiredColumns sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobPotentialcontainerstosell"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

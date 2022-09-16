@@ -1,0 +1,579 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		},
+		"dataFactory_properties_globalParameters_EnvironmentType_value": {
+			"type": "string",
+			"defaultValue": "dev"
+		},
+		"dataFactory_location": {
+			"type": "string",
+			"defaultValue": "westeurope"
+		},
+		"dataFactory_identity_type": {
+			"type": "string",
+			"defaultValue": "SystemAssigned"
+		},
+		"BoxViewVault_ls_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://boxviewvault.vault.azure.net/"
+		},
+		"AzureBlobStorage_properties_typeProperties_connectionString_secretName": {
+			"type": "string",
+			"defaultValue": "BlobStorageConnectionString"
+		},
+		"AzureBlobStorage1_properties_typeProperties_connectionString_secretName": {
+			"type": "string",
+			"defaultValue": "BlobStorageConnectionString"
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_endpoint": {
+			"type": "object",
+			"defaultValue": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "BoxViewADXUrl"
+			}
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_tenant": {
+			"type": "string",
+			"defaultValue": "05d75c05-fa1a-42e7-9cf1-eb416c396f2d"
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_servicePrincipalId": {
+			"type": "object",
+			"defaultValue": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "boxviewapps-client-id"
+			}
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "box_view"
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_dataLakeStoreUri": {
+			"type": "object",
+			"defaultValue": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "BoxViewDataLakeStoreUri"
+			}
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_servicePrincipalId": {
+			"type": "object",
+			"defaultValue": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "boxviewapps-client-id"
+			}
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_tenant": {
+			"type": "string",
+			"defaultValue": "05d75c05-fa1a-42e7-9cf1-eb416c396f2d"
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_subscriptionId": {
+			"type": "string",
+			"defaultValue": ""
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_resourceGroupName": {
+			"type": "string",
+			"defaultValue": ""
+		},
+		"BoxView_Dataverse_properties_typeProperties_servicePrincipalId": {
+			"type": "object",
+			"defaultValue": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "DataverseServicePrincipalId"
+			}
+		},
+		"boxview_asql_properties_typeProperties_connectionString_secretName": {
+			"type": "string",
+			"defaultValue": "AzureSQLConnectionString"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[parameters('factoryName')]",
+			"type": "Microsoft.DataFactory/factories",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"globalParameters": {
+					"EnvironmentType": {
+						"type": "string",
+						"value": "[parameters('dataFactory_properties_globalParameters_EnvironmentType_value')]"
+					}
+				}
+			},
+			"dependsOn": [],
+			"location": "[parameters('dataFactory_location')]",
+			"identity": {
+				"type": "[parameters('dataFactory_identity_type')]"
+			}
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/BoxViewVault_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('BoxViewVault_ls_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureBlobStorage')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "BoxViewVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "[parameters('AzureBlobStorage_properties_typeProperties_connectionString_secretName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BoxViewVault_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureBlobStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "BoxViewVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "[parameters('AzureBlobStorage1_properties_typeProperties_connectionString_secretName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BoxViewVault_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_BoxView')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "AzureDataExplorer",
+				"annotations": [],
+				"typeProperties": {
+					"endpoint": "[parameters('AzureDataExplorer_BoxView_properties_typeProperties_endpoint')]",
+					"tenant": "[parameters('AzureDataExplorer_BoxView_properties_typeProperties_tenant')]",
+					"servicePrincipalId": "[parameters('AzureDataExplorer_BoxView_properties_typeProperties_servicePrincipalId')]",
+					"servicePrincipalKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "BoxViewVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "boxviewapps-client-secret"
+					},
+					"database": "[parameters('AzureDataExplorer_BoxView_properties_typeProperties_database')]"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BoxViewVault_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStore_ApplicationServicePrincipal')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "AzureDataLakeStore",
+				"annotations": [],
+				"typeProperties": {
+					"dataLakeStoreUri": "[parameters('AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_dataLakeStoreUri')]",
+					"servicePrincipalId": "[parameters('AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_servicePrincipalId')]",
+					"servicePrincipalKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "BoxViewVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "boxviewapps-client-secret"
+					},
+					"tenant": "[parameters('AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_tenant')]",
+					"subscriptionId": "[parameters('AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_subscriptionId')]",
+					"resourceGroupName": "[parameters('AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_resourceGroupName')]"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BoxViewVault_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/BoxView_Dataverse')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "Dynamics",
+				"annotations": [],
+				"typeProperties": {
+					"deploymentType": "Online",
+					"serviceUri": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "BoxViewVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "DataverseServiceUri"
+					},
+					"authenticationType": "AADServicePrincipal",
+					"servicePrincipalCredentialType": "ServicePrincipalKey",
+					"servicePrincipalId": "[parameters('BoxView_Dataverse_properties_typeProperties_servicePrincipalId')]",
+					"servicePrincipalCredential": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "BoxViewVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "DataverseIntegrationAppUserSecret"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BoxViewVault_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_asql')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "BoxViewVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "[parameters('boxview_asql_properties_typeProperties_connectionString_secretName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/BoxViewVault_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_Account')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "customer"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_CSSContainer')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "container_adx"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_Contact')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "contact"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_Country')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "country"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_DMRLContainer')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "containers_with_mrl"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_DMRLContainerADX')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "container_adx"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_DMRLWorkorder')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "work_orders_with_repair_limits"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_Delivery_sites')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "delivery_sites"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_EquipmentInventoryCSP')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "equipment_inventory"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_IntermodalPotentialContainerToDeliver')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "intermodal_potential_containers_to_deliver"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_PotentialContainerToSell')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "potential_containers_to_sell_hubble"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_Pricetable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "price_table_pre_price_mgmt_tool"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		}
+	]
+}

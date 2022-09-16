@@ -1,0 +1,37 @@
+{
+	"name": "BoxView_Dataverse",
+	"properties": {
+		"type": "Dynamics",
+		"annotations": [],
+		"typeProperties": {
+			"deploymentType": "Online",
+			"serviceUri": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "DataverseServiceUri"
+			},
+			"authenticationType": "AADServicePrincipal",
+			"servicePrincipalCredentialType": "ServicePrincipalKey",
+			"servicePrincipalId": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "DataverseServicePrincipalId"
+			},
+			"servicePrincipalCredential": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "DataverseIntegrationAppUserSecret"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}

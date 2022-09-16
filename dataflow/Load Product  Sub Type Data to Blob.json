@@ -1,0 +1,39 @@
+{
+	"name": "Load Product  Sub Type Data to Blob",
+	"properties": {
+		"folder": {
+			"name": "CSP"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "blob_product_index_staging_data",
+						"type": "DatasetReference"
+					},
+					"name": "StagingBlobProductSubType"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "blob_product_sub_type_intermediate_data",
+						"type": "DatasetReference"
+					},
+					"name": "sink1",
+					"description": "Export data to blob_customer_data"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AggregateProductSubType"
+				},
+				{
+					"name": "SelectDistinctProductSubType"
+				}
+			],
+			"script": "source(output(\n\t\tproduct_index as string,\n\t\tproduct_group as string,\n\t\tprevious_category as string,\n\t\tcategory as string,\n\t\tsize as decimal(38,18),\n\t\tproduct_type as string,\n\t\tproduct_type_name as string,\n\t\tsubtype as string,\n\t\tsubtype_name as string,\n\t\tsearch_name as string,\n\t\topen_for_sale as string,\n\t\tignore_breakeven as string,\n\t\tprice_product_type as string,\n\t\tprice_category as string,\n\t\tkey_from_inventory as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['productindex']) ~> StagingBlobProductSubType\nStagingBlobProductSubType aggregate(groupBy(subtype),\n\tproduct_sub_type_count = count()) ~> AggregateProductSubType\nAggregateProductSubType select(mapColumn(\n\t\tproduct_sub_type = subtype,\n\t\tproduct_sub_type_name = subtype\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: true) ~> SelectDistinctProductSubType\nSelectDistinctProductSubType sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\tpartitionFileNames:['product_subtype.parquet'],\n\ttruncate: true,\n\tpartitionBy('hash', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> sink1"
+		}
+	}
+}

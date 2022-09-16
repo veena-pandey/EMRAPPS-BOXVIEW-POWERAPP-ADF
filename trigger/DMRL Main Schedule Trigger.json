@@ -1,0 +1,27 @@
+{
+	"name": "DMRL Main Schedule Trigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "DMRL Master Pipeline",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"ForceDatasetRefresh": false
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Hour",
+				"interval": 4,
+				"startTime": "2021-09-12T23:00:00Z",
+				"timeZone": "UTC"
+			}
+		}
+	}
+}

@@ -1,0 +1,19 @@
+{
+	"name": "AzureDataExplorer_EquipmentInventoryCSP",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataExplorer_BoxView",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ADX"
+		},
+		"annotations": [],
+		"type": "AzureDataExplorerTable",
+		"schema": [],
+		"typeProperties": {
+			"table": "equipment_inventory"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

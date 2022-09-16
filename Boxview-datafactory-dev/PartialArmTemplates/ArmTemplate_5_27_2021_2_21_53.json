@@ -1,0 +1,60 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Load_Potential_Container_To_Sell_Data_To_ADLS_writeback')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSS"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "Dataversedata"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "datalake_potential_containers_to_sell_hubble_writeback",
+								"type": "DatasetReference"
+							},
+							"name": "CopytoADLS",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "SelectRequiredColumns"
+						},
+						{
+							"name": "DerivedColumn1"
+						}
+					],
+					"script": "source(output(\n\t\tcreatedby as string,\n\t\tcreatedbyname as string,\n\t\tcreatedbyyominame as string,\n\t\tcreatedon as timestamp,\n\t\tcreatedonbehalfby as string,\n\t\tcreatedonbehalfbyname as string,\n\t\tcreatedonbehalfbyyominame as string,\n\t\timportsequencenumber as integer,\n\t\tmaersk_address as string,\n\t\tmaersk_allocatedby as string,\n\t\tmaersk_allocatedbyalgorythm as boolean,\n\t\tmaersk_allocateddeallocateddate as timestamp,\n\t\tmaersk_allocationdate as timestamp,\n\t\tmaersk_alternateselllocation as string,\n\t\tmaersk_alternateselllocationname as string,\n\t\tmaersk_alternatesellpool as string,\n\t\tmaersk_alternatesellpoolname as string,\n\t\tmaersk_bookingnumber as string,\n\t\tmaersk_brand as string,\n\t\tmaersk_breakevenpricealtpool as decimal(38,18),\n\t\tmaersk_breakevenpricepool as decimal(38,18),\n\t\tmaersk_carriername as string,\n\t\tmaersk_cdsdestination as string,\n\t\tmaersk_cdsdestinationname as string,\n\t\tmaersk_clientname as string,\n\t\tmaersk_consigneename as string,\n\t\tmaersk_consigneescvcode as string,\n\t\tmaersk_containertosaleid as string,\n\t\tmaersk_datahash as string,\n\t\tmaersk_destinationarrivaldate as timestamp,\n\t\tmaersk_destinationarrivaltimeexpectedutc as timestamp,\n\t\tmaersk_destinationlocationname as string,\n\t\tmaersk_diplalocation as string,\n\t\tmaersk_diplalocationname as string,\n\t\tmaersk_dispatchby as string,\n\t\tmaersk_dispatchdate as timestamp,\n\t\tmaersk_dropnumber as string,\n\t\tmaersk_email as string,\n\t\tmaersk_equipmentgroup as string,\n\t\tmaersk_equipmentowntype as string,\n\t\tmaersk_evaccostaltpool as decimal(38,18),\n\t\tmaersk_evacostpool as decimal(38,18),\n\t\tmaersk_haulagetype as integer,\n\t\tmaersk_isallocated as boolean,\n\t\tmaersk_lastmothervesselarrivaltime as timestamp,\n\t\tmaersk_lastmothervesseldestinationlocation as string,\n\t\tmaersk_lastmothervesseldestinationlocationname as string,\n\t\tmaersk_lastraildestination as string,\n\t\tmaersk_lastraildestinationname as string,\n\t\tmaersk_name as string,\n\t\tmaersk_nextcarriername as string,\n\t\tmaersk_nextwonumber as string,\n\t\tmaersk_placeofdeliverylocationid as string,\n\t\tmaersk_placeofdeliverylocationidname as string,\n\t\tmaersk_pool as string,\n\t\tmaersk_poolallocatedto as string,\n\t\tmaersk_poolallocatedtoname as string,\n\t\tmaersk_poolcode as string,\n\t\tmaersk_poolname as string,\n\t\tmaersk_primarycompositekey as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_railcombo as boolean,\n\t\tmaersk_region as string,\n\t\tmaersk_regpool as string,\n\t\tmaersk_regpoolname as string,\n\t\tmaersk_shipmentid as string,\n\t\tmaersk_truckcarriername as string,\n\t\tmaersk_type as string,\n\t\tmaersk_week as integer,\n\t\tmaersk_weekloc as string,\n\t\tmaersk_wonumber as string,\n\t\tmodifiedby as string,\n\t\tmodifiedbyname as string,\n\t\tmodifiedbyyominame as string,\n\t\tmodifiedon as timestamp,\n\t\tmodifiedonbehalfby as string,\n\t\tmodifiedonbehalfbyname as string,\n\t\tmodifiedonbehalfbyyominame as string,\n\t\toverriddencreatedon as timestamp,\n\t\townerid as string,\n\t\towneridname as string,\n\t\towneridtype as string,\n\t\towneridyominame as string,\n\t\towningbusinessunit as string,\n\t\towningteam as string,\n\t\towninguser as string,\n\t\tstatecode as integer,\n\t\tstatuscode as integer,\n\t\ttimezoneruleversionnumber as integer,\n\t\tutcconversiontimezonecode as integer,\n\t\tversionnumber as long\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['potentialcontainertosell']) ~> Dataversedata\nDataversedata select(mapColumn(\n\t\tcontainer_id = maersk_name,\n\t\tdrop_number = maersk_dropnumber,\n\t\tconsignee_scv_code = maersk_consigneescvcode,\n\t\tpool_id = maersk_pool,\n\t\treg_pool = maersk_regpool,\n\t\teqpno = maersk_name,\n\t\tlast_mother_vessel_arrival_time = maersk_lastmothervesselarrivaltime,\n\t\tlast_mother_vessel_destination_location_id = maersk_lastmothervesseldestinationlocation,\n\t\tplace_of_delivery_location_id = maersk_placeofdeliverylocationid,\n\t\tdestination_arrival_time_utc_expected = maersk_destinationarrivaltimeexpectedutc,\n\t\tshipment_id = maersk_shipmentid,\n\t\tbooking_number = maersk_bookingnumber,\n\t\tbrand = maersk_brand,\n\t\tequipment_group = maersk_equipmentgroup,\n\t\tproduction_year = maersk_productionyear,\n\t\tequipment_own_type = maersk_equipmentowntype,\n\t\tdestination_arrival_date = maersk_destinationarrivaldate,\n\t\tdipla_location_id = maersk_diplalocation,\n\t\tdipla_location_name = maersk_diplalocationname,\n\t\tdestination_location_name = maersk_destinationlocationname,\n\t\tconsignee_name = maersk_consigneename,\n\t\tlast_rail_dest = maersk_lastraildestination,\n\t\tCARRIER_NAME = maersk_carriername,\n\t\tNEXT_WONUMBER = maersk_nextwonumber,\n\t\tNEXT_CARRIER_NAME = maersk_nextcarriername,\n\t\tWONUMBER = maersk_wonumber,\n\t\trail_combo = maersk_railcombo,\n\t\two_number = maersk_wonumber,\n\t\ttruck_carrier_name = maersk_truckcarriername,\n\t\tcds_dest = maersk_cdsdestination,\n\t\tregion = maersk_region,\n\t\talternate_sell_location = maersk_alternateselllocation,\n\t\talternate_sell_pool = maersk_alternatesellpool,\n\t\tbreak_even_price_pool = maersk_breakevenpricepool,\n\t\tbreak_even_price_alt_pool = maersk_breakevenpricealtpool,\n\t\tweek = maersk_week,\n\t\thaulage_type = maersk_haulagetype,\n\t\tpool_allocated_to = maersk_poolallocatedto,\n\t\tallocation_date = maersk_allocationdate,\n\t\tallocated_by = maersk_allocatedby,\n\t\tallocated_by_algorithm = maersk_allocatedbyalgorythm,\n\t\tdispatch_date = maersk_dispatchdate,\n\t\tdispatch_by = maersk_dispatchby,\n\t\tweek_loc = maersk_weekloc,\n\t\tis_allocated = maersk_isallocated,\n\t\tclient_name = maersk_clientname,\n\t\taddress = maersk_address,\n\t\temail = maersk_email,\n\t\ttype = maersk_type,\n\t\tevac_cost_pool = maersk_evacostpool,\n\t\tevac_cost_alt_pool = maersk_evaccostaltpool,\n\t\tprimary_composite_key = maersk_primarycompositekey\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumns\nSelectRequiredColumns derive(production_year = toInteger(production_year),\n\t\tdestination_arrival_date = toDate(destination_arrival_date),\n\t\tbreak_even_price_pool = toDouble(break_even_price_pool),\n\t\tbreak_even_price_alt_pool = toDouble(break_even_price_alt_pool),\n\t\thaulage_type = case(haulage_type==379430000,'Carrier Haulage',\r\ncase(haulage_type==379430001,'Merchant Haulage')),\n\t\tallocation_date = toDate(allocation_date),\n\t\tdispatch_date = toDate(dispatch_date),\n\t\tevac_cost_pool = toDouble(evac_cost_pool),\n\t\tevac_cost_alt_pool = toDouble(evac_cost_alt_pool),\n\t\tis_allocated = case(is_allocated==true(),'Yes',\r\ncase(is_allocated==false(),'No'))) ~> DerivedColumn1\nDerivedColumn1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\tpartitionFileNames:['potential_containers_to_sell_hubble_writeback.snappy.parquet'],\n\tpartitionBy('hash', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> CopytoADLS"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

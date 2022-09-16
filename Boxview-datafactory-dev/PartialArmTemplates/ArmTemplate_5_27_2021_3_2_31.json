@@ -1,0 +1,1777 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DMRL Container dataverse Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow for transformation",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Export DMRL Container Data From Dataverse to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Load DMRL Container Data To Blob",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "DMRLContainer Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Dataverse Exported Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Intermediate Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Staging Folder For ContainerADX",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "containers_with_mrl",
+								"queryTimeout": "00:50:00",
+								"noTruncation": false
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_DMRLContainer",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLContainer_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Staging Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Dataverse Exported Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Intermediate Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_Intermediate_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Export DMRL Container Data From Dataverse to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "DMRLContainerADX Data From ADX To Staging Blob_copy1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch mapping=\"logical\" distinct=\"false\">\n  <entity name=\"maersk_dmrlcontainer\">\n    <attribute name=\"maersk_dmrlcontainerid\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_datahash\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_DMRLContainer",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy DMRL Container to Dataverse",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data flow for transformation",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "dmrlcontainer",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DynamicsSink",
+								"writeBatchSize": 10,
+								"writeBehavior": "upsert",
+								"ignoreNullValues": false,
+								"alternateKeyName": "maersk_containernamekey"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "ContainerNo",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "MRLUnit",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_mrlunit",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "MRLBox",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_mrlbox",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "ContainerType",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_containertype",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "EquipmentManufacturer",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentmanufacturer",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "isSales",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_issales",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "isSurplus",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_issurplus",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "reasoning",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_reasoning",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "DamagePrediction",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										},
+										"sink": {
+											"name": "maersk_damageprediction",
+											"type": "Double"
+										}
+									},
+									{
+										"source": {
+											"name": "Location",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_location",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "current_location_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_currentlocation",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_own_type",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentowner",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "is_empty",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_isempty",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_leasing_company",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_leasingcompanyname",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "move",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_move",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "location_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_locationid",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "move_timestamp",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_movetimestamp",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_leasing_contract_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentleasingcontractid",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "profile",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_profile",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "payload_weight",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_payloadweight",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_group",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentgroup",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "checksum",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_datahash",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "production_year"
+										},
+										"sink": {
+											"name": "maersk_productionyear"
+										}
+									},
+									{
+										"source": {
+											"name": "container_status"
+										},
+										"sink": {
+											"name": "maersk_containerstatus"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_DMRLContainer_Intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "boxview_DMRLContainer",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "DMRLContainerADX Data From ADX To Staging Blob_copy1",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "DMRLContainer Data From ADX To Staging Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "container_adx | project container_id,current_location_id,equipment_own_type,is_empty,equipment_leasing_company,['move'], location_id,move_timestamp,equipment_leasing_contract_id,profile,payload_weight,equipment_group,production_year,container_status",
+								"queryTimeout": "00:50:00",
+								"noTruncation": false
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_DMRLContainerADX",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLContainerADX_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Staging Folder For ContainerADX",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLContainerADX_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"folder": {
+					"name": "DMRL"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-07T06:14:44Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/OLDDMRL Workorder dataverse Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "DMRLWorkorder Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Dataverse Exported Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Intermediate Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "work_orders_with_repair_limits",
+								"queryTimeout": "00:50:00",
+								"noTruncation": false
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"maxConcurrentConnections": 8
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 1000000
+								}
+							},
+							"enableStaging": false,
+							"parallelCopies": 4,
+							"dataIntegrationUnits": 4,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_DMRLWorkorder",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLWorkorder_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Staging Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Dataverse Exported Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Intermediate Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_Intermediate_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Export DMRL Workorder Data From Dataverse to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "DMRLWorkorder Data From ADX To Staging Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch attribute=\"maersk_datahash\" operator=\"eq\" >\n  <entity name=\"maersk_workorder\" >\n    <attribute name=\"maersk_isshouldrepair\" />\n    <attribute name=\"maersk_totalcostunderwarranty\" />\n    <attribute name=\"maersk_equipmentid\" />\n    <attribute name=\"maersk_equipmentredeliverystatus\" />\n    <attribute name=\"maersk_issales\" />\n    <attribute name=\"maersk_adjustedmrl\" />\n    <attribute name=\"maersk_adjustedmrlbox\" />\n    <attribute name=\"maersk_datahash\" />\n    <attribute name=\"maersk_reasoningforrejection\" />\n    <attribute name=\"maersk_totalpricenotcoveredbywarranty\" />\n    <attribute name=\"maersk_issurplus\" />\n    <attribute name=\"maersk_lastmovetimestamp\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_location\" />\n    <attribute name=\"maersk_isurgent\" />\n    <attribute name=\"maersk_lastmove\" />\n    <attribute name=\"maersk_expirydate\" />\n    <attribute name=\"createdon\" />\n    <attribute name=\"maersk_equipmentsize\" />\n    <attribute name=\"maersk_totalcostwithmaerskparts\" />\n    <attribute name=\"maersk_workorderid\" />\n    <attribute name=\"maersk_isempty\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"maxConcurrentConnections": 8
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 1000000
+								}
+							},
+							"enableStaging": false,
+							"parallelCopies": 4,
+							"dataIntegrationUnits": 4
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_DMRLWorkorder",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLWorkorder_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Data flow for transformation",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Export DMRL Container Data From Dataverse to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "OLDLoad DMRL Workorder Data To Blob",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Copy DMRL Workorder Data to Dataverse",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data flow for transformation",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "dmrlworkorder",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DynamicsSink",
+								"writeBatchSize": 10,
+								"writeBehavior": "upsert",
+								"ignoreNullValues": false,
+								"alternateKeyName": "maersk_workorderidkey"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "work_order_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "is_sales",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_issales",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "is_surplus",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_issurplus",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_size",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_equipmentsize",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "last_move_timestamp",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_lastmovetimestamp",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "is_empty",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_isempty",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "last_move",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_lastmove",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_redelivery_status",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_equipmentredeliverystatus",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "adjusted_MRL",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_adjustedmrl",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "adjusted_MRL_box",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_adjustedmrlbox",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "total_cost_with_maersk_parts_usd",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_totalcostwithmaerskparts",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "total_price_not_covered_by_warranty",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_totalpricenotcoveredbywarranty",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "total_cost_under_warranty",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_totalcostunderwarranty",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "expiry_date",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_expirydate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "reasoning_for_rejection",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_reasoningforrejection",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "work_order_created_date",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "createdon",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "is_urgent",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_isurgent",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "is_should_repair",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_isshouldrepair",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "Location",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_location",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentid",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "checksum",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_datahash",
+											"type": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_DMRLWorkorder_Intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "boxview_DMRLWorkorder",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Export DMRL Container Data From Dataverse to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Export DMRL Workorder Data From Dataverse to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"maersk_dmrlcontainer\" >\n    <all-attributes/>\n    <attribute name=\"maersk_containertype\" />\n    <attribute name=\"maersk_issales\" />\n    <attribute name=\"maersk_damageprediction\" />\n    <attribute name=\"maersk_reasoning\" />\n    <attribute name=\"maersk_mrlbox\" />\n    <attribute name=\"maersk_issurplus\" />\n    <attribute name=\"maersk_productionyear\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_location\" />\n    <attribute name=\"maersk_mrlunit\" />\n    <attribute name=\"maersk_equipmentmanufacturer\" />\n    <attribute name=\"maersk_datahash\" />\n    <filter/>\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_DMRLContainer",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					}
+				],
+				"folder": {
+					"name": "DMRL"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-07T05:50:19Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/dataflows/OLDLoad DMRL Workorder Data To Blob')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DMRL Workorder dataverse Pipeline_rework')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Delete Staging Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Dataverse Workorder Exported Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Intermediate Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_Intermediate_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Export DMRL Workorder Data From Dataverse to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "DMRLWorkorder_Snapshot Data From ADX To Staging Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch >\n  <entity name=\"maersk_workorder\" >\n    <attribute name=\"maersk_datahash\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_workorderid\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"maxConcurrentConnections": 8
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 1000000
+								}
+							},
+							"enableStaging": false,
+							"parallelCopies": 4,
+							"dataIntegrationUnits": 4
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_DMRLWorkorder",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLWorkorder_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Data flow for transformation",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Export DMRL Container Data From Dataverse to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Load DMRL Workorder Data To Blob_rework",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Copy DMRL Workorder Data to Dataverse",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data flow for transformation",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "dmrlworkorder",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DynamicsSink",
+								"writeBatchSize": 10,
+								"writeBehavior": "upsert",
+								"ignoreNullValues": false,
+								"alternateKeyName": "maersk_workorderidkey"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_DMRLWorkorder_Intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "boxview_DMRLWorkorder",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Export DMRL Container Data From Dataverse to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Export DMRL Workorder Data From Dataverse to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"maersk_dmrlcontainer\" >\n    <all-attributes/>\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_dmrlcontainerid\" />\n    <filter/>\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_DMRLContainer",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "DMRLWorkorder_Snapshot Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Dataverse Workorder Exported Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Intermediate Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Dataverse Container Exported Folder_copy1",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "work_order_mrl_hubble_snapshot | join kind=leftouter (work_order | project shop_id, wolocation_id = location_id,cluster_id,work_order_id,total_cost_usd) on work_order_id  | project work_order_id,container_id,is_sales,is_surplus,equipment_size,location_id,last_move_timestamp,is_empty,last_move,equipment_redelivery_status,adjusted_MRL,adjusted_MRL_box,total_cost_with_maersk_parts_usd,total_price_not_covered_by_warranty,total_cost_under_warranty,expiry_date,should_repair,reasoning_for_rejection,work_order_created_date,urgent,shop_id,cluster_id, wolocation_id,total_cost_usd",
+								"queryTimeout": "00:50:00",
+								"noTruncation": false
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"maxConcurrentConnections": 8
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 1000000
+								}
+							},
+							"enableStaging": false,
+							"parallelCopies": 4,
+							"dataIntegrationUnits": 4,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_Workorder_hubblesnapshot",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLWorkorder_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Dataverse Container Exported Folder_copy1",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"folder": {
+					"name": "DMRL"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-07T05:50:19Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_DMRL')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "DMRL Container dataverse Pipeline",
+							"type": "PipelineReference"
+						}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "OLDDMRL Workorder dataverse Pipeline",
+							"type": "PipelineReference"
+						}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Hour",
+						"interval": 9,
+						"startTime": "2021-05-18T09:00:00Z",
+						"timeZone": "UTC"
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/pipelines/DMRL Container dataverse Pipeline')]",
+				"[concat(variables('factoryId'), '/pipelines/OLDDMRL Workorder dataverse Pipeline')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/OLDLoad DMRL Workorder Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "DMRL"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobDMRLWorkorder"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "sitedatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dmrlworkorderdataverseData"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dmrlcontainerdatafromblob"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_Intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobDMRLWorkorder",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "LookupLocation"
+						},
+						{
+							"name": "SelectLocation"
+						},
+						{
+							"name": "checksum"
+						},
+						{
+							"name": "SelectRequiredColumns"
+						},
+						{
+							"name": "LookupDMRLContainerId"
+						},
+						{
+							"name": "SelectDMRLContainerId"
+						},
+						{
+							"name": "RelateTwoDataSets"
+						},
+						{
+							"name": "FilterOnlyNewRows"
+						},
+						{
+							"name": "SelectRequiredColumnsWithChecksum"
+						}
+					],
+					"script": "source(output(\n\t\twork_order_id as string,\n\t\tcontainer_type as string,\n\t\tlocation_id as string,\n\t\tshared_data_join_key as string,\n\t\tequipment_profile as string,\n\t\tcontainer_id as string,\n\t\tequipment_reefer_type as string,\n\t\tequipment_group as string,\n\t\tage as integer,\n\t\tequipment_id as string,\n\t\tloc_id as string,\n\t\tequipment_reefer_manufacturer as string,\n\t\tequipment_size as string,\n\t\tproduction_year as string,\n\t\tequipment_type as string,\n\t\tequipment_sub_type as string,\n\t\ttotal_cost_with_maersk_parts_usd as double,\n\t\tmerc_mode as string,\n\t\twork_order_created_date as timestamp,\n\t\tstatus_code as double,\n\t\tstatus_description as string,\n\t\tshop_id as string,\n\t\tis_box_repair as boolean,\n\t\tequipment_manufacturer as string,\n\t\tprofile as string,\n\t\tis_sales as boolean,\n\t\teffective_lifetime as decimal(38,18),\n\t\treplacement_value as decimal(38,18),\n\t\tminimum_repair_limit as decimal(38,18),\n\t\tminimum_repair_limit_no_sale as decimal(38,18),\n\t\treplacement_value_box as decimal(38,18),\n\t\tminimum_repair_limit_box as decimal(38,18),\n\t\tminimum_repair_limit_no_sale_box as decimal(38,18),\n\t\tis_surplus as boolean,\n\t\tevacuation_cost as decimal(38,18),\n\t\tpositioning_cost as decimal(38,18),\n\t\trepair_limit_age as decimal(38,18),\n\t\trepair_limit_age_box as decimal(38,18),\n\t\tis_empty as boolean,\n\t\tmove as string,\n\t\tequipment_redelivery_status as boolean,\n\t\tfood_upgrade as boolean,\n\t\tcountry as string,\n\t\tmove_timestamp as timestamp,\n\t\tapproved_by as string,\n\t\trepair_limit_age_original as decimal(38,18),\n\t\trepair_limit_age_box_original as decimal(38,18),\n\t\tminimum_repair_limit_original as decimal(38,18),\n\t\tminimum_repair_limit_no_sale_original as decimal(38,18),\n\t\tminimum_repair_limit_box_original as decimal(38,18),\n\t\tminimum_repair_limit_no_sale_box_original as decimal(38,18),\n\t\tpool_id as string,\n\t\tmaersk_repair_limit as decimal(38,18),\n\t\tmaersk_repair_limit_box as decimal(38,18),\n\t\tmaersk_repair_limit_original as decimal(38,18),\n\t\tmaersk_repair_limit_box_original as decimal(38,18),\n\t\tleased_eqpno as string,\n\t\texpiry_date as string,\n\t\treefer_oem_manufacturer as string,\n\t\treason_power as string,\n\t\tmajor_reefer_component as boolean,\n\t\tfood_grade_repair as boolean,\n\t\tsafety_reason as string,\n\t\toutfleet_reason as string,\n\t\tfood_grade_multiplier as decimal(38,18),\n\t\tmajor_reefer_components_multiplier as decimal(38,18),\n\t\tlifetime_spend_lookback_days as decimal(38,18),\n\t\tlifetime_spend_mrl_multiplier as decimal(38,18),\n\t\tlifetime_spend_number_of_wo as decimal(38,18),\n\t\tsafety_mrl_multiplier as decimal(38,18),\n\t\tpower_consumption_multiplier as decimal(38,18),\n\t\tfleet_optimization_multiplier as decimal(38,18),\n\t\tlifetime_spend_age as decimal(38,18),\n\t\tpower_consumption_age_reef as decimal(38,18),\n\t\tfood_grade_lookback_days as decimal(38,18),\n\t\tmajor_reefer_lookback_days as decimal(38,18),\n\t\tuntitled_column_14 as string,\n\t\tfood_grade_adjustment as decimal(38,18),\n\t\tmajor_reefer_components_adjustment as decimal(38,18),\n\t\tpower_consumption_adjustment as decimal(38,18),\n\t\toutfleet_profiles_adjustment as decimal(38,18),\n\t\tsafety_adjustment as decimal(38,18),\n\t\tfood_grade_adjustment_box as decimal(38,18),\n\t\tmajor_reefer_components_adjustment_box as decimal(38,18),\n\t\tpower_consumption_adjustment_box as decimal(38,18),\n\t\toutfleet_profiles_adjustment_box as decimal(38,18),\n\t\tsafety_adjustment_box as decimal(38,18),\n\t\twork_order_long_timestamp as long,\n\t\tabove_mrl_lookback_limit as integer,\n\t\tlookback_expensive_repairs as long,\n\t\tlookback_adjustment as decimal(38,18),\n\t\tlookback_adjustment_box as decimal(38,18),\n\t\tadjusted_MRL as decimal(38,18),\n\t\tadjusted_MRL_box as decimal(38,18),\n\t\treasoning as string,\n\t\tmrl_bonus as decimal(38,18),\n\t\tvalid_to as timestamp,\n\t\tmin_age as decimal(38,18),\n\t\tmax_age as decimal(38,18),\n\t\trevision as decimal(38,18),\n\t\ttotal_cost_under_warranty as double,\n\t\twarranty_type as string,\n\t\twarranty_expires_soon as long,\n\t\ttotal_price_not_covered_by_warranty as double,\n\t\trepair_month as timestamp,\n\t\twould_repair_before_change as boolean,\n\t\twould_repair_after_change as boolean,\n\t\treasoning_for_rejection as string,\n\t\turgent as boolean\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlworkorder']) ~> StagingBlobDMRLWorkorder\nsource(output(\n\t\tmaersk_country as string,\n\t\tmaersk_siteid as string,\n\t\tmaersk_name as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> sitedatafromblob\nsource(output(\n\t\tcreatedby as string,\n\t\tcreatedbyname as string,\n\t\tcreatedbyyominame as string,\n\t\tcreatedon as timestamp,\n\t\tcreatedonbehalfby as string,\n\t\tcreatedonbehalfbyname as string,\n\t\tcreatedonbehalfbyyominame as string,\n\t\timportsequencenumber as integer,\n\t\tmaersk_adjustedmrl as integer,\n\t\tmaersk_adjustedmrlbox as integer,\n\t\tmaersk_datahash as string,\n\t\tmaersk_equipmentid as string,\n\t\tmaersk_equipmentidname as string,\n\t\tmaersk_equipmentredeliverystatus as boolean,\n\t\tmaersk_equipmentsize as integer,\n\t\tmaersk_expirydate as timestamp,\n\t\tmaersk_isempty as boolean,\n\t\tmaersk_issales as boolean,\n\t\tmaersk_isshouldrepair as boolean,\n\t\tmaersk_issurplus as boolean,\n\t\tmaersk_isurgent as boolean,\n\t\tmaersk_lastmove as integer,\n\t\tmaersk_lastmovetimestamp as timestamp,\n\t\tmaersk_location as string,\n\t\tmaersk_locationname as string,\n\t\tmaersk_name as string,\n\t\tmaersk_reasoningforrejection as string,\n\t\tmaersk_totalcostunderwarranty as integer,\n\t\tmaersk_totalcostwithmaerskparts as integer,\n\t\tmaersk_totalpricenotcoveredbywarranty as integer,\n\t\tmaersk_workorderid as string,\n\t\tmodifiedby as string,\n\t\tmodifiedbyname as string,\n\t\tmodifiedbyyominame as string,\n\t\tmodifiedon as timestamp,\n\t\tmodifiedonbehalfby as string,\n\t\tmodifiedonbehalfbyname as string,\n\t\tmodifiedonbehalfbyyominame as string,\n\t\toverriddencreatedon as timestamp,\n\t\townerid as string,\n\t\towneridname as string,\n\t\towneridtype as string,\n\t\towneridyominame as string,\n\t\towningbusinessunit as string,\n\t\towningteam as string,\n\t\towninguser as string,\n\t\tstatecode as integer,\n\t\tstatuscode as integer,\n\t\ttimezoneruleversionnumber as integer,\n\t\tutcconversiontimezonecode as integer,\n\t\tversionnumber as long\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlworkorder']) ~> dmrlworkorderdataverseData\nsource(output(\n\t\tmaersk_reasoning as string,\n\t\tmaersk_location as string,\n\t\tmaersk_dmrlcontainerid as string,\n\t\tmaersk_mrlbox as integer,\n\t\tmaersk_equipmentmanufacturer as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_issurplus as boolean,\n\t\tmaersk_name as string,\n\t\tmaersk_issales as boolean,\n\t\tmaersk_mrlunit as integer,\n\t\tmaersk_damageprediction as double,\n\t\tmaersk_containertype as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlcontainer']) ~> dmrlcontainerdatafromblob\nSelectRequiredColumns derive(work_order_id = trim(toString(byName('work_order_id'))),\n\t\tequipment_id = trim(toString(byName('equipment_id'))),\n\t\tis_sales = toBoolean(case(upper(trim(toString(byName('is_sales'))))=='true',\"1\",\"0\")),\n\t\tis_surplus = toBoolean(case(upper(trim(toString(byName('is_surplus'))))=='true',\"1\",\"0\")),\n\t\tequipment_size = case(toInteger(byName('equipment_size'))==20,379430000,\r\n    case(toInteger(byName('equipment_size'))==40,379430001,\r\n        case(toInteger(byName('equipment_size'))==45,379430002))),\n\t\tlocation_id = trim(toString(byName('location_id'))),\n\t\tlast_move_timestamp = toTimestamp(toString(byName('move_timestamp'))),\n\t\tis_empty = toBoolean(case(upper(trim(toString(byName('is_empty'))))=='true',\"1\",\"0\")),\n\t\tlast_move = case(trim(toString(byName('last_move')))=='GATE-IN',379430000,\r\n    case(trim(toString(byName('last_move')))=='GATE-OUT',379430001,\r\n        case(trim(toString(byName('last_move')))=='DISCHARG',379430002,\r\n            case(trim(toString(byName('last_move')))=='LOAD',379430003,\r\n                case(trim(toString(byName('last_move')))=='ON-RAIL',379430004,\r\n                    case(trim(toString(byName('last_move')))=='OFF-RAIL',379430005,\r\n                        case(trim(toString(byName('last_move')))=='STRIPPIN',379430006))))))),\n\t\tequipment_redelivery_status = toBoolean(case(upper(trim(toString(byName('equipment_redelivery_status'))))=='true',\"1\",\"0\")),\n\t\tadjusted_MRL = toInteger(byName('adjusted_MRL')),\n\t\tadjusted_MRL_box = toInteger(byName('adjusted_MRL_box')),\n\t\ttotal_cost_with_maersk_parts_usd = toInteger(byName('total_cost_with_maersk_parts_usd')),\n\t\ttotal_price_not_covered_by_warranty = toInteger(byName('total_price_not_covered_by_warranty')),\n\t\ttotal_cost_under_warranty = toInteger(byName('total_cost_under_warranty')),\n\t\texpiry_date = toTimestamp(toString(byName('expiry_date'))),\n\t\tis_should_repair = toBoolean(case(upper(trim(toString(byName('is_should_repair'))))=='true',\"1\",\"0\")),\n\t\treasoning_for_rejection = trim(toString(byName('reasoning_for_rejection'))),\n\t\twork_order_created_date = toTimestamp(toString(byName('work_order_created_date'))),\n\t\tis_urgent = toBoolean(case(upper(trim(toString(byName('is_urgent'))))=='true',\"1\",\"0\"))) ~> DataTransformation\nDataTransformation, sitedatafromblob lookup(location_id == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupLocation\nLookupLocation select(mapColumn(\n\t\twork_order_id,\n\t\tequipment_id,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlast_move_timestamp,\n\t\tis_empty,\n\t\tlast_move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\treasoning_for_rejection,\n\t\twork_order_created_date,\n\t\tis_urgent,\n\t\tis_should_repair,\n\t\tLocation = maersk_siteid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectLocation\nSelectDMRLContainerId derive(checksum = sha1(work_order_id,is_sales,is_surplus,equipment_size,last_move_timestamp,is_empty,last_move,equipment_redelivery_status,adjusted_MRL,adjusted_MRL_box,total_cost_with_maersk_parts_usd,total_price_not_covered_by_warranty,total_cost_under_warranty,expiry_date,reasoning_for_rejection,work_order_created_date,is_urgent,is_should_repair,Location,equipment_id)) ~> checksum\nStagingBlobDMRLWorkorder select(mapColumn(\n\t\twork_order_id,\n\t\tequipment_id,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlocation_id,\n\t\tlast_move_timestamp = move_timestamp,\n\t\tis_empty,\n\t\tlast_move = move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\tis_should_repair = is_box_repair,\n\t\treasoning_for_rejection,\n\t\twork_order_created_date,\n\t\tis_urgent = urgent\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumns\nSelectLocation, dmrlcontainerdatafromblob lookup(equipment_id == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupDMRLContainerId\nLookupDMRLContainerId select(mapColumn(\n\t\twork_order_id,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlast_move_timestamp,\n\t\tis_empty,\n\t\tlast_move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\treasoning_for_rejection,\n\t\twork_order_created_date,\n\t\tis_urgent,\n\t\tis_should_repair,\n\t\tLocation,\n\t\tequipment_id = maersk_dmrlcontainerid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectDMRLContainerId\nchecksum, dmrlworkorderdataverseData join(work_order_id == maersk_name,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> RelateTwoDataSets\nRelateTwoDataSets filter(case(maersk_datahash==checksum, false(), true())) ~> FilterOnlyNewRows\nFilterOnlyNewRows select(mapColumn(\n\t\twork_order_id,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlast_move_timestamp,\n\t\tis_empty,\n\t\tlast_move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\treasoning_for_rejection,\n\t\twork_order_created_date,\n\t\tis_urgent,\n\t\tis_should_repair,\n\t\tLocation,\n\t\tequipment_id,\n\t\tchecksum\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumnsWithChecksum\nSelectRequiredColumnsWithChecksum sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobDMRLWorkorder"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

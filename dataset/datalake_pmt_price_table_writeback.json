@@ -1,0 +1,31 @@
+{
+	"name": "datalake_pmt_price_table_writeback",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStore_ApplicationServicePrincipal",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"environment": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "PMT"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureDataLakeStoreLocation",
+				"folderPath": {
+					"value": "@concat('datalake-',dataset().environment,'/lob/boxviewapps/writebacks/price_table_price_mgmt_tool_writeback')",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

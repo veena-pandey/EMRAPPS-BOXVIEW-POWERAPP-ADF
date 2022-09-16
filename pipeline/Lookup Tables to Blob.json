@@ -1,0 +1,887 @@
+{
+	"name": "Lookup Tables to Blob",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy User data to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Exported User Data",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"systemuser\" >\n    <all-attributes/>\n    <attribute name=\"queueid\" />\n    <attribute name=\"systemuserid\" />\n    <attribute name=\"internalemailaddress\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "queueid",
+									"type": "Guid"
+								},
+								"sink": {
+									"name": "queueid",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "systemuserid",
+									"type": "Guid"
+								},
+								"sink": {
+									"name": "systemuserid",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "internalemailaddress",
+									"type": "String"
+								},
+								"sink": {
+									"name": "internalemailaddress",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_user",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_user_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Pool data to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Exported Pool Data",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"maersk_pool\" >\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_pooldescription\" />\n    <attribute name=\"maersk_poolcode\" />\n    <attribute name=\"maersk_poolid\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "maersk_name",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_name",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_pooldescription",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_pooldescription",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_poolcode",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_poolcode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_poolid",
+									"type": "Guid"
+								},
+								"sink": {
+									"name": "maersk_poolid",
+									"type": "Guid"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Pool",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_pool_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Currency data to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Exported Currency Data",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"transactioncurrency\" >\n    <all-attributes/>\n    <attribute name=\"isocurrencycode\" />\n    <attribute name=\"currencyname\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "isocurrencycode",
+									"type": "String"
+								},
+								"sink": {
+									"name": "isocurrencycode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "currencyname",
+									"type": "String"
+								},
+								"sink": {
+									"name": "currencyname",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "transactioncurrencyid",
+									"type": "Guid"
+								},
+								"sink": {
+									"name": "transactioncurrencyid",
+									"type": "Guid"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Currency",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_currency_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Team data to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Exported Team Data",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"team\" >\n    <all-attributes/>\n    <attribute name=\"teamid\" />\n    <attribute name=\"name\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "teamid",
+									"type": "Guid"
+								},
+								"sink": {
+									"name": "teamid",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "name",
+									"type": "String"
+								},
+								"sink": {
+									"name": "name",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Team",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_team_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Area data to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Exported Area Data",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"maersk_area\" >\n    <attribute name=\"maersk_areacode\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_areaid\" />\n    <attribute name=\"maersk_region\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "maersk_areacode",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_areacode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_name",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_name",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_areaid",
+									"type": "Guid"
+								},
+								"sink": {
+									"name": "maersk_areaid",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_region",
+									"type": "Guid"
+								},
+								"sink": {
+									"name": "maersk_region",
+									"type": "Guid"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Area",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_area_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Region data to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Exported Region Data",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"maersk_region\" >\n    <attribute name=\"maersk_regionid\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_regioncode\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "maersk_regionid",
+									"type": "Guid"
+								},
+								"sink": {
+									"name": "maersk_regionid",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_name",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_name",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_regioncode",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_regioncode",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Region",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_region_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy City data to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Exported City Data",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"maersk_city\" >\n    <attribute name=\"maersk_cityid\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_citycode\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "maersk_cityid",
+									"type": "Guid"
+								},
+								"sink": {
+									"name": "maersk_cityid",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_name",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_name",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_citycode",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_citycode",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_City",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_city_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Cluster data to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Exported Cluster Data",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"maersk_cluster\" >\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_clustercode\" />\n    <attribute name=\"maersk_clusterid\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "maersk_name",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_name",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_clustercode",
+									"type": "String"
+								},
+								"sink": {
+									"name": "maersk_clustercode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_clusterid",
+									"type": "Guid"
+								},
+								"sink": {
+									"name": "maersk_clusterid",
+									"type": "Guid"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Cluster",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_cluster_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Delete Exported User Data",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_user_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Delete Exported Pool Data",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_pool_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Delete Exported Currency Data",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_currency_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Delete Exported Team Data",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_team_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Delete Exported Area Data",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_area_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Delete Exported Region Data",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_region_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Delete Exported City Data",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_city_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Delete Exported Cluster Data",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_cluster_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "CSP"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-05-05T12:09:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,19 @@
+{
+	"name": "boxview_Potential_Container_To_Sell",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "BoxView_Dataverse",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Dataverse"
+		},
+		"annotations": [],
+		"type": "DynamicsEntity",
+		"schema": [],
+		"typeProperties": {
+			"entityName": "maersk_containertosale"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,42 @@
+{
+	"name": "Load Cluster Data To Blob",
+	"properties": {
+		"folder": {
+			"name": "CSP"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "blob_site_staging_data",
+						"type": "DatasetReference"
+					},
+					"name": "StagingBlobSite"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Blob_cluster_intermediate_data",
+						"type": "DatasetReference"
+					},
+					"name": "IntermediateBlobCluster",
+					"description": "Export data to blob_customer_data"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DataTransformation"
+				},
+				{
+					"name": "SelectRequiredColumns"
+				},
+				{
+					"name": "SelectDistinctValues"
+				}
+			],
+			"script": "source(output(\n\t\tloc_cd as string,\n\t\tsite_type as string,\n\t\tloc_dsc as string,\n\t\tcountry_cd as string,\n\t\tcountry_dsc as string,\n\t\tcity_cd as string,\n\t\tcity_dsc as string,\n\t\tcluster_cd as string,\n\t\tcluster_dsc as string,\n\t\tregion_cd as string,\n\t\tregion_dsc as string,\n\t\tpool_cd as string,\n\t\tpool_dsc as string,\n\t\tlopsc_cd as string,\n\t\tlopsc_dsc as string,\n\t\tlat as double,\n\t\tlon as double,\n\t\temail_address as string,\n\t\tphone as string,\n\t\tcontact_person as string,\n\t\taddress_1 as string,\n\t\taddress_2 as string,\n\t\taddress_3 as string,\n\t\tpostal_code as string,\n\t\tcity_name as string,\n\t\tlocal_tax as decimal(38,18),\n\t\tglobal_tax as decimal(38,18),\n\t\teu_tax as decimal(38,18),\n\t\tstate_province_name as string,\n\t\tsales_manager_dry as string,\n\t\tsales_manager_reefer as string,\n\t\tcustomer_service as string,\n\t\tsales_operations as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> StagingBlobSite\nStagingBlobSite derive(cluster_cd = trim(toString(byName('cluster_cd'))),\n\t\tcluster_dsc = trim(toString(byName('cluster_dsc')))) ~> DataTransformation\nDataTransformation select(mapColumn(\n\t\tmaersk_clustercode = cluster_cd,\n\t\tmaersk_name = cluster_dsc\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> SelectRequiredColumns\nSelectRequiredColumns aggregate(groupBy(maersk_name),\n\teach(match(name!='maersk_name'), $$ = first($$))) ~> SelectDistinctValues\nSelectDistinctValues sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tmapColumn(\n\t\tmaersk_clustercode,\n\t\tmaersk_name\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobCluster"
+		}
+	}
+}

@@ -1,0 +1,783 @@
+{
+	"name": "Country Dataverse Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Data transformation flow",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Copy Country Data From ADX To Staging Blob",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "Load Country Data To Blob",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "Delete Export Data folder from blob",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "Copy Country data to Dataverse",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_country_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Copy Country data to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Export Data folder from blob",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"maersk_country\" >\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_area\" />\n    <attribute name=\"maersk_countrycode\" />\n    <attribute name=\"maersk_countryid\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Country",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_country_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Delete Staging Data folder from blob",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_country_staging_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Copy Country Data From ADX To Staging Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Staging Data folder from blob",
+						"dependencyConditions": [
+							"Completed"
+						]
+					},
+					{
+						"activity": "Delete Intermediate Folder",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureDataExplorerSource",
+						"query": "country | join kind=leftouter (site | project short=country_cd, cluster_cd,cluster_dsc | summarize any(cluster_cd,cluster_dsc) by short) on short",
+						"queryTimeout": "00:10:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AzureDataExplorer_Country",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_country_staging_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Country data to Dataverse",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Data transformation flow",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "country",
+							"wildcardFileName": "*.snappy.parquet",
+							"enablePartitionDiscovery": false
+						}
+					},
+					"sink": {
+						"type": "DynamicsSink",
+						"writeBatchSize": 10,
+						"writeBehavior": "upsert",
+						"ignoreNullValues": false,
+						"alternateKeyName": "maersk_countrynamekey"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "short",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_countrycode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "country",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_name",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "team_name",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_teamname",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "allowed_for_sale",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_isallowedforsale",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "nationalisation",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_nationalization",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "tax_and_legal_approval",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_taxandlegalapproval",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "custom_clearance",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_customclearance",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "custom_documentation_required_before_or_after_releasing_equipment",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "maersk_customdocumentationrequired",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"name": "bilateral_sales",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_bilateralsales",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "bilateral_gst_vat",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								},
+								"sink": {
+									"name": "maersk_bilateralvat",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"name": "local_vat_gst_amount",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								},
+								"sink": {
+									"name": "maersk_localvat",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"name": "local_agency_billing",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_localagencybilling",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "agency_sales_agreement",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_agencysalesagreement",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "release_free_time",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "maersk_releasefreetime",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"name": "cash_payment_waiting_time",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "maersk_cashpaymentwaitingtime",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"name": "discount_limit_dry",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "maersk_discountlimitdry",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"name": "discount_limit_reefer",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "maersk_discountlimitreefer",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_terms",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_salestermsmultiline",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_notice",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_salesnotice",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "cancellation_fee_per_unit",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "maersk_cancellationfee",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"name": "handling_charges_per_unit",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "maersk_handlingcharges",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"name": "load_port_to_display",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_loadporttodisplay",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "discharge_port_to_display",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_dischargeporttodisplay",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_general",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_invoiceheadergeneral",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_billoflading",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_invoiceheaderbilloflading",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_manufacturedby",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_invoiceheadermanufacturedby",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_incoterm",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_invoiceheaderincoterm",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_getflevy",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "maersk_invoiceheadergetflevy",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_nhilevy",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "maersk_invoiceheadernhilevy",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_portofloading",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "maersk_invoiceheaderportofloading",
+									"type": "Boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_hfm",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_invoiceheaderhfm",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_hfmics",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_invoiceheaderhfmics",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_hfmpayer",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_invoiceheaderhfmpayer",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_address_abn_gst_taxid",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_invoiceaddress",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "banking_details",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_bankingdetailsmultiline",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "scv_code_agency",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_agencycode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_manager_reefer",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_salesmanagerreefer",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_manager_dry",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_salesmanagerdry",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_manager_backup",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_salesmanagerbackup",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_operations",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_salesoperations",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "customer_service",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_customerservice",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "team",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_team",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "currency",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_currency",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "area",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_area",
+									"type": "Guid"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "blob_country_intermediate_data",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "boxview_Country",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Delete Intermediate Folder",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_country_intermediate_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "CSP"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-05-03T13:56:25Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

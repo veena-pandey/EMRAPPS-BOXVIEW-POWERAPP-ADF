@@ -1,0 +1,31 @@
+{
+	"name": "datalake_potential_containers_to_sell_hubble_writeback",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStore_ApplicationServicePrincipal",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"environment": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "CSS"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureDataLakeStoreLocation",
+				"folderPath": {
+					"value": "@concat('datalake-',dataset().environment,'/lob/boxviewapps/writebacks/potential_containers_to_sell_hubble_writeback')",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

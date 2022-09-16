@@ -1,0 +1,24 @@
+{
+	"name": "boxview_etl_CSS_ContainerToSell_EquipmentGroup_Stage",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "boxview_asql",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ASQL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "Group",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "CSS_ContainerToSell_EquipmentGroup_Stage"
+		}
+	}
+}

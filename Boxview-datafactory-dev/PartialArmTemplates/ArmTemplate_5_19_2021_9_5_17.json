@@ -1,0 +1,2099 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Equipment Inventory CSP dataverse Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow for transformation",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Export EquipmentInventory Data From Dataverse to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Load EquipmentInventory Data To Blob",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Copy equipment_inventory CSP to Dataverse",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data flow for transformation",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "equipmentinventorycsp",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DynamicsSink",
+								"writeBatchSize": 10,
+								"writeBehavior": "upsert",
+								"ignoreNullValues": false,
+								"alternateKeyName": "maersk_equipmentkey"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "eqpno",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "move_timestamp",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_movetimestamp",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "move",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_move",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "previous_move",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_previousmove",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "actfor",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_actfor",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "stempty",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_isempty",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "subtype",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_productsubtype",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "operator_code",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_operatorcode",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "damage_code",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_damagecode",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "bill_of_lading_number",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_billofladingnumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "booking_reference",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_bookingreference",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "longstanding_days",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_longstandingdays",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "actloc_short",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_actloc_short",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "pre_trip_inspection_status",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_pretripinspectionstatus",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "year_of_make",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_yearofmake",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "infleet_year",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_infleetyear",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "machinery_type",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_machinerytype",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "leasing_contract",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_leasingcontract",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "leasing_company",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_leasingcompany",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "release_free_time",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_releasefreetime",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "allowed_for_sale",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_allowedforsale",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "merc_mode",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_mercmode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "repair_estimate",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										},
+										"sink": {
+											"name": "maersk_repairestimate",
+											"type": "Double"
+										}
+									},
+									{
+										"source": {
+											"name": "eqioflt",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_eqioflt",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_reefer_type",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentreefertype",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "current_loc_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_current_loc_dsc",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "age_normal",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_agenormal",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "is_pass_through",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_ispassthrough",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "level_3_size",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_size",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "ignore_breakeven",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_ignorebreakevenprice",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "Evacuation_cost_per_box",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										},
+										"sink": {
+											"name": "maersk_evacuationcostperbox",
+											"type": "Double"
+										}
+									},
+									{
+										"source": {
+											"name": "emr_unit_cost",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										},
+										"sink": {
+											"name": "maersk_emrunitcosts",
+											"type": "Double"
+										}
+									},
+									{
+										"source": {
+											"name": "cherry_picking_fee",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_cherrypickingfee",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "move_timestamp_gate_buy",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_move_timestamp_gate_buy",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "inventory_type",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_inventorytype",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "gate_buy_gate_in_done",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_gatebuygateindone",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_move_date",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_salesmovedate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "discharge_site",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_dischargesite",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "discharge_port_to_display",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_discharge_port_to_display",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "load_port_to_display",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_load_port_to_display",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "last_move_from_fast_track",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_last_move_from_fast_track",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "key_to_price",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_keytoprice",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "price_category_from_price",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_pricecategoryfromprice",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_price",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_salesprice",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "price_to_compare",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_pricetocompare",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_minimum_price",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_salesmanagerminprice",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "regional_manager_minimum_price",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_regionalmanagerminprice",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "headquarter_minimum_price",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_hqminprice",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_dry",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_salesmanagerdry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_reefer",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_salesmanagerreefer",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "regional_manager_dry",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_regionalmanagerdry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "regional_manager_reefer",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_regionalmanagerreefer",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "teamid",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_team",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "load_countryid",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_loadcountry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "discharge_countryid",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_dischargecountry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "repair_country_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_repaircountry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "repair_location_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_repairlocation",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "current_country",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_currentcountry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "current_site",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_currentsite",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "current_pool",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_currentpool",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "product_index",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_productindex",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "client",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_client",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "key_to_product",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_keytoproduct",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "checksum",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_datahash",
+											"type": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_equipment_inventory_csp_intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Boxview_container",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy EquipmentInventory Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Intermediate Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Dataverse Exported Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "equipment_inventory",
+								"queryTimeout": "00:10:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_EquipmentInventoryCSP",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_equipment_inventory_csp_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Staging Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_equipment_inventory_csp_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Intermediate Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_equipment_inventory_csp_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Export EquipmentInventory Data From Dataverse to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Copy EquipmentInventory Data From ADX To Staging Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch attribute=\"maersk_datahash\" operator=\"eq\" >\n  <entity name=\"maersk_container\" >\n    <attribute name=\"maersk_dischargecountry\" />\n    <attribute name=\"maersk_leasingcontract\" />\n    <attribute name=\"maersk_regionalmanagerminprice\" />\n    <attribute name=\"maersk_currentsite\" />\n    <attribute name=\"maersk_emrunitcosts\" />\n    <attribute name=\"maersk_salesmovedate\" />\n    <attribute name=\"maersk_allowedforsale\" />\n    <attribute name=\"maersk_oldcategory\" />\n    <attribute name=\"maersk_reasoning\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_containerid\" />\n    <attribute name=\"maersk_size\" />\n    <attribute name=\"maersk_ispassthrough\" />\n    <attribute name=\"maersk_load_port_to_display\" />\n    <attribute name=\"maersk_datahash\" />\n    <attribute name=\"maersk_current_loc_dsc\" />\n    <attribute name=\"maersk_dischargesite\" />\n    <attribute name=\"maersk_repairestimate\" />\n    <attribute name=\"maersk_productsubtype\" />\n    <attribute name=\"maersk_infleetyear\" />\n    <attribute name=\"maersk_bookingreference\" />\n    <attribute name=\"maersk_region\" />\n    <attribute name=\"maersk_regionalmanagerreefer\" />\n    <attribute name=\"maersk_damagecode\" />\n    <attribute name=\"maersk_gatebuygateindone\" />\n    <attribute name=\"maersk_isempty\" />\n    <attribute name=\"maersk_hqminprice\" />\n    <attribute name=\"maersk_area\" />\n    <attribute name=\"maersk_pricecategoryfromprice\" />\n    <attribute name=\"maersk_eqioflt\" />\n    <attribute name=\"maersk_currentcountry\" />\n    <attribute name=\"maersk_cherrypickingfee\" />\n    <attribute name=\"maersk_salesmanagerminprice\" />\n    <attribute name=\"maersk_regionalmanagerdry\" />\n    <attribute name=\"maersk_pricetocompare\" />\n    <attribute name=\"maersk_yearofmake\" />\n    <attribute name=\"maersk_movetimestamp\" />\n    <attribute name=\"maersk_keytoproduct\" />\n    <attribute name=\"maersk_keytoprice\" />\n    <attribute name=\"maersk_actfor\" />\n    <attribute name=\"maersk_billofladingnumber\" />\n    <attribute name=\"maersk_team\" />\n    <attribute name=\"maersk_salesmanagerreefer\" />\n    <attribute name=\"maersk_actloc_short\" />\n    <attribute name=\"maersk_move_timestamp_gate_buy\" />\n    <attribute name=\"maersk_productindex\" />\n    <attribute name=\"maersk_currentpool\" />\n    <attribute name=\"maersk_equipmentreefertype\" />\n    <attribute name=\"maersk_ignorebreakevenprice\" />\n    <attribute name=\"maersk_pretripinspectionstatus\" />\n    <attribute name=\"maersk_inventorytype\" />\n    <attribute name=\"maersk_move\" />\n    <attribute name=\"transactioncurrencyid\" />\n    <attribute name=\"maersk_previousmove\" />\n    <attribute name=\"maersk_mrlunit\" />\n    <attribute name=\"maersk_longstandingdays\" />\n    <attribute name=\"maersk_salesprice\" />\n    <attribute name=\"maersk_loadcountry\" />\n    <attribute name=\"maersk_loadsite\" />\n    <attribute name=\"maersk_discharge_port_to_display\" />\n    <attribute name=\"maersk_client\" />\n    <attribute name=\"maersk_repaircountry\" />\n    <attribute name=\"maersk_mercmode\" />\n    <attribute name=\"maersk_evacuationcostperbox\" />\n    <attribute name=\"maersk_operatorcode\" />\n    <attribute name=\"maersk_agenormal\" />\n    <attribute name=\"maersk_damageprediction\" />\n    <attribute name=\"maersk_salesmanagerdry\" />\n    <attribute name=\"maersk_mrlbox\" />\n    <attribute name=\"maersk_machinerytype\" />\n    <attribute name=\"maersk_minsalesprice\" />\n    <attribute name=\"maersk_repairlocation\" />\n    <attribute name=\"maersk_leasingcompany\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "Boxview_container",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_equipment_inventory_csp_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Dataverse Exported Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_equipment_inventory_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"folder": {
+					"name": "CSP"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-10T09:56:41Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/dataflows/Load EquipmentInventory Data To Blob')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Lookup Tables to Blob')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy User data to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Exported User Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"systemuser\" >\n    <all-attributes/>\n    <attribute name=\"queueid\" />\n    <attribute name=\"systemuserid\" />\n    <attribute name=\"internalemailaddress\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_user",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_user_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy Pool data to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Exported Pool Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"maersk_pool\" >\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_poolcode\" />\n    <attribute name=\"maersk_poolid\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_Pool",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_pool_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy Currency data to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Exported Currency Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"transactioncurrency\" >\n    <all-attributes/>\n    <attribute name=\"isocurrencycode\" />\n    <attribute name=\"currencyname\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_Currency",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_currency_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy Team data to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Exported Team Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"team\" >\n    <all-attributes/>\n    <attribute name=\"teamid\" />\n    <attribute name=\"name\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_Team",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_team_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy Area data to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Exported Area Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"maersk_area\" >\n    <all-attributes/>\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_areaid\" />\n    <attribute name=\"maersk_areacode\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_Area",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_area_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy Region data to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Exported Region Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"maersk_region\" >\n    <attribute name=\"maersk_regionid\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_regioncode\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_Region",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_region_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy City data to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Exported City Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"maersk_city\" >\n    <attribute name=\"maersk_cityid\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_citycode\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_City",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_city_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy Cluster data to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Exported Cluster Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"maersk_cluster\" >\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_clustercode\" />\n    <attribute name=\"maersk_clusterid\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_Cluster",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_cluster_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Exported User Data",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_user_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Exported Pool Data",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_pool_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Exported Currency Data",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_currency_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Exported Team Data",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_team_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Exported Area Data",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_area_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Exported Region Data",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_region_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Exported City Data",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_city_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Exported Cluster Data",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_cluster_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"folder": {
+					"name": "CSP"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-05T12:09:43Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load DMRL Container Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "DMRL"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobDMRLContainer"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "sitedatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dataverseData"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainerADX_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobDMRLContainerADX"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_Intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobDMRLContainer",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "LookupLocation"
+						},
+						{
+							"name": "SelectLocation"
+						},
+						{
+							"name": "checksum"
+						},
+						{
+							"name": "RelateTwoDatasets"
+						},
+						{
+							"name": "SelectNewRowColumns"
+						},
+						{
+							"name": "FilterOnlyNewRows"
+						},
+						{
+							"name": "DataTransformationDMRLContainerADX"
+						},
+						{
+							"name": "JoinDMRLContainerAndDMRLContainerADX"
+						},
+						{
+							"name": "SelectRequiredCoulmns"
+						}
+					],
+					"script": "source(output(\n\t\tContainerNo as string,\n\t\tMRLUnit as decimal(38,18),\n\t\tMRLBox as decimal(38,18),\n\t\tContainerType as string,\n\t\tEquipmentManufacturer as string,\n\t\tisSales as boolean,\n\t\tisSurplus as boolean,\n\t\tLocation as string,\n\t\tProductionYear as string,\n\t\treasoning as string,\n\t\tDamagePrediction as double\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlcontainer']) ~> StagingBlobDMRLContainer\nsource(output(\n\t\tmaersk_country as string,\n\t\tmaersk_siteid as string,\n\t\tmaersk_name as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> sitedatafromblob\nsource(output(\n\t\tmaersk_reasoning as string,\n\t\tmaersk_location as string,\n\t\tmaersk_dmrlcontainerid as string,\n\t\tmaersk_mrlbox as integer,\n\t\tmaersk_equipmentmanufacturer as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_issurplus as boolean,\n\t\tmaersk_name as string,\n\t\tmaersk_issales as boolean,\n\t\tmaersk_mrlunit as integer,\n\t\tmaersk_damageprediction as double,\n\t\tmaersk_containertype as string,\n\t\tmaersk_datahash as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlcontainer']) ~> dataverseData\nsource(output(\n\t\tcontainer_id as string,\n\t\tcurrent_location_id as string,\n\t\tequipment_own_type as string,\n\t\tis_empty as boolean,\n\t\tequipment_leasing_company as string,\n\t\tmove as string,\n\t\tlocation_id as string,\n\t\tmove_timestamp as timestamp,\n\t\tequipment_leasing_contract_id as string,\n\t\tprofile as string,\n\t\tpayload_weight as string,\n\t\tequipment_group as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlcontaineradx']) ~> StagingBlobDMRLContainerADX\nStagingBlobDMRLContainer derive(ContainerNo = trim(toString(byName('ContainerNo'))),\n\t\tMRLUnit = toInteger(byName('MRLUnit')),\n\t\tMRLBox = toInteger(byName('MRLBox')),\n\t\tContainerType = trim(toString(byName('ContainerType'))),\n\t\tEquipmentManufacturer = trim(toString(byName('EquipmentManufacturer'))),\n\t\tisSales = toBoolean(case(upper(trim(toString(byName('isSales'))))=='TRUE',\"1\",\"0\")),\n\t\tisSurplus = toBoolean(case(upper(trim(toString(byName('isSurplus'))))=='TRUE',\"1\",\"0\")),\n\t\tLocation = trim(toString(byName('Location'))),\n\t\tProductionYear = toTimestamp(toString(byName('ProductionYear'))),\n\t\treasoning = trim(toString(byName('reasoning'))),\n\t\tDamagePrediction = toDouble(byName('DamagePrediction'))) ~> DataTransformation\nDataTransformation, sitedatafromblob lookup(Location == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupLocation\nLookupLocation select(mapColumn(\n\t\tContainerNo,\n\t\tMRLUnit,\n\t\tMRLBox,\n\t\tContainerType,\n\t\tEquipmentManufacturer,\n\t\tisSales,\n\t\tisSurplus,\n\t\tProductionYear,\n\t\treasoning,\n\t\tDamagePrediction,\n\t\tLocation = maersk_siteid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectLocation\nSelectRequiredCoulmns derive(checksum = sha1(columns('SelectRequiredCoulmns'))) ~> checksum\nchecksum, dataverseData join(ContainerNo == maersk_name,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> RelateTwoDatasets\nFilterOnlyNewRows select(mapColumn(\n\t\tContainerNo,\n\t\tMRLUnit,\n\t\tMRLBox,\n\t\tContainerType,\n\t\tEquipmentManufacturer,\n\t\tisSales,\n\t\tisSurplus,\n\t\tProductionYear,\n\t\treasoning,\n\t\tDamagePrediction,\n\t\tLocation,\n\t\tcurrent_location_id,\n\t\tequipment_own_type,\n\t\tis_empty,\n\t\tequipment_leasing_company,\n\t\tmove,\n\t\tlocation_id,\n\t\tmove_timestamp,\n\t\tequipment_leasing_contract_id,\n\t\tprofile,\n\t\tpayload_weight,\n\t\tequipment_group,\n\t\tchecksum\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectNewRowColumns\nRelateTwoDatasets filter(case(maersk_datahash==checksum, false(), true())) ~> FilterOnlyNewRows\nStagingBlobDMRLContainerADX derive(container_id = trim(toString(byName('container_id'))),\n\t\tcurrent_location_id = trim(toString(byName('current_location_id'))),\n\t\tequipment_own_type = trim(toString(byName('equipment_own_type'))),\n\t\tis_empty = toBoolean(case(upper(trim(toString(byName('is_empty'))))=='TRUE',\"1\",\"0\")),\n\t\tequipment_leasing_company = trim(toString(byName('equipment_leasing_company'))),\n\t\tmove = case(trim(toString(byName('move')))=='GATE-IN',379430000,\r\n    case(trim(toString(byName('move')))=='GATE-OUT',379430001,\r\n        case(trim(toString(byName('move')))=='DISCHARG',379430002,\r\n            case(trim(toString(byName('move')))=='LOAD',379430003,\r\n                case(trim(toString(byName('move')))=='ON-RAIL',379430004,\r\n                    case(trim(toString(byName('move')))=='OFF-RAIL',379430005,\r\n                        case(trim(toString(byName('move')))=='STRIPPIN',379430006))))))),\n\t\tlocation_id = trim(toString(byName('location_id'))),\n\t\tmove_timestamp = toTimestamp(toString(byName('move_timestamp'))),\n\t\tequipment_leasing_contract_id = trim(toString(byName('equipment_leasing_contract_id'))),\n\t\tprofile = trim(toString(byName('profile'))),\n\t\tpayload_weight = trim(toString(byName('payload_weight'))),\n\t\tequipment_group = trim(toString(byName('equipment_group')))) ~> DataTransformationDMRLContainerADX\nSelectLocation, DataTransformationDMRLContainerADX join(ContainerNo == container_id,\n\tjoinType:'right',\n\tbroadcast: 'auto')~> JoinDMRLContainerAndDMRLContainerADX\nJoinDMRLContainerAndDMRLContainerADX select(mapColumn(\n\t\tContainerNo,\n\t\tMRLUnit,\n\t\tMRLBox,\n\t\tContainerType,\n\t\tEquipmentManufacturer,\n\t\tisSales,\n\t\tisSurplus,\n\t\tProductionYear,\n\t\treasoning,\n\t\tDamagePrediction,\n\t\tLocation,\n\t\tcurrent_location_id,\n\t\tequipment_own_type,\n\t\tis_empty,\n\t\tequipment_leasing_company,\n\t\tmove,\n\t\tlocation_id,\n\t\tmove_timestamp,\n\t\tequipment_leasing_contract_id,\n\t\tprofile,\n\t\tpayload_weight,\n\t\tequipment_group\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredCoulmns\nSelectNewRowColumns sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobDMRLContainer"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load DMRL Workorder Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "DMRL"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobDMRLWorkorder"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "sitedatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dmrlworkorderdataverseData"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLContainer_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dmrlcontainerdatafromblob"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_Intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobDMRLWorkorder",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "LookupLocation"
+						},
+						{
+							"name": "SelectLocation"
+						},
+						{
+							"name": "checksum"
+						},
+						{
+							"name": "SelectRequiredColumns"
+						},
+						{
+							"name": "LookupDMRLContainerId"
+						},
+						{
+							"name": "SelectDMRLContainerId"
+						},
+						{
+							"name": "RelateTwoDataSets"
+						},
+						{
+							"name": "FilterOnlyNewRows"
+						},
+						{
+							"name": "SelectRequiredColumnsWithChecksum"
+						}
+					],
+					"script": "source(output(\n\t\twork_order_id as string,\n\t\tcontainer_type as string,\n\t\tlocation_id as string,\n\t\tshared_data_join_key as string,\n\t\tequipment_profile as string,\n\t\tcontainer_id as string,\n\t\tequipment_reefer_type as string,\n\t\tequipment_group as string,\n\t\tage as integer,\n\t\tequipment_id as string,\n\t\tloc_id as string,\n\t\tequipment_reefer_manufacturer as string,\n\t\tequipment_size as string,\n\t\tproduction_year as string,\n\t\tequipment_type as string,\n\t\tequipment_sub_type as string,\n\t\ttotal_cost_with_maersk_parts_usd as double,\n\t\tmerc_mode as string,\n\t\twork_order_created_date as timestamp,\n\t\tstatus_code as double,\n\t\tstatus_description as string,\n\t\tshop_id as string,\n\t\tis_box_repair as boolean,\n\t\tequipment_manufacturer as string,\n\t\tprofile as string,\n\t\tis_sales as boolean,\n\t\teffective_lifetime as decimal(38,18),\n\t\treplacement_value as decimal(38,18),\n\t\tminimum_repair_limit as decimal(38,18),\n\t\tminimum_repair_limit_no_sale as decimal(38,18),\n\t\treplacement_value_box as decimal(38,18),\n\t\tminimum_repair_limit_box as decimal(38,18),\n\t\tminimum_repair_limit_no_sale_box as decimal(38,18),\n\t\tis_surplus as boolean,\n\t\tevacuation_cost as decimal(38,18),\n\t\tpositioning_cost as decimal(38,18),\n\t\trepair_limit_age as decimal(38,18),\n\t\trepair_limit_age_box as decimal(38,18),\n\t\tis_empty as boolean,\n\t\tmove as string,\n\t\tequipment_redelivery_status as boolean,\n\t\tfood_upgrade as boolean,\n\t\tcountry as string,\n\t\tmove_timestamp as timestamp,\n\t\tapproved_by as string,\n\t\trepair_limit_age_original as decimal(38,18),\n\t\trepair_limit_age_box_original as decimal(38,18),\n\t\tminimum_repair_limit_original as decimal(38,18),\n\t\tminimum_repair_limit_no_sale_original as decimal(38,18),\n\t\tminimum_repair_limit_box_original as decimal(38,18),\n\t\tminimum_repair_limit_no_sale_box_original as decimal(38,18),\n\t\tpool_id as string,\n\t\tmaersk_repair_limit as decimal(38,18),\n\t\tmaersk_repair_limit_box as decimal(38,18),\n\t\tmaersk_repair_limit_original as decimal(38,18),\n\t\tmaersk_repair_limit_box_original as decimal(38,18),\n\t\tleased_eqpno as string,\n\t\texpiry_date as string,\n\t\treefer_oem_manufacturer as string,\n\t\treason_power as string,\n\t\tmajor_reefer_component as boolean,\n\t\tfood_grade_repair as boolean,\n\t\tsafety_reason as string,\n\t\toutfleet_reason as string,\n\t\tfood_grade_multiplier as decimal(38,18),\n\t\tmajor_reefer_components_multiplier as decimal(38,18),\n\t\tlifetime_spend_lookback_days as decimal(38,18),\n\t\tlifetime_spend_mrl_multiplier as decimal(38,18),\n\t\tlifetime_spend_number_of_wo as decimal(38,18),\n\t\tsafety_mrl_multiplier as decimal(38,18),\n\t\tpower_consumption_multiplier as decimal(38,18),\n\t\tfleet_optimization_multiplier as decimal(38,18),\n\t\tlifetime_spend_age as decimal(38,18),\n\t\tpower_consumption_age_reef as decimal(38,18),\n\t\tfood_grade_lookback_days as decimal(38,18),\n\t\tmajor_reefer_lookback_days as decimal(38,18),\n\t\tuntitled_column_14 as string,\n\t\tfood_grade_adjustment as decimal(38,18),\n\t\tmajor_reefer_components_adjustment as decimal(38,18),\n\t\tpower_consumption_adjustment as decimal(38,18),\n\t\toutfleet_profiles_adjustment as decimal(38,18),\n\t\tsafety_adjustment as decimal(38,18),\n\t\tfood_grade_adjustment_box as decimal(38,18),\n\t\tmajor_reefer_components_adjustment_box as decimal(38,18),\n\t\tpower_consumption_adjustment_box as decimal(38,18),\n\t\toutfleet_profiles_adjustment_box as decimal(38,18),\n\t\tsafety_adjustment_box as decimal(38,18),\n\t\twork_order_long_timestamp as long,\n\t\tabove_mrl_lookback_limit as integer,\n\t\tlookback_expensive_repairs as long,\n\t\tlookback_adjustment as decimal(38,18),\n\t\tlookback_adjustment_box as decimal(38,18),\n\t\tadjusted_MRL as decimal(38,18),\n\t\tadjusted_MRL_box as decimal(38,18),\n\t\treasoning as string,\n\t\tmrl_bonus as decimal(38,18),\n\t\tvalid_to as timestamp,\n\t\tmin_age as decimal(38,18),\n\t\tmax_age as decimal(38,18),\n\t\trevision as decimal(38,18),\n\t\ttotal_cost_under_warranty as double,\n\t\twarranty_type as string,\n\t\twarranty_expires_soon as long,\n\t\ttotal_price_not_covered_by_warranty as double,\n\t\trepair_month as timestamp,\n\t\twould_repair_before_change as boolean,\n\t\twould_repair_after_change as boolean,\n\t\treasoning_for_rejection as string,\n\t\turgent as boolean\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlworkorder']) ~> StagingBlobDMRLWorkorder\nsource(output(\n\t\tmaersk_country as string,\n\t\tmaersk_siteid as string,\n\t\tmaersk_name as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> sitedatafromblob\nsource(output(\n\t\tcreatedby as string,\n\t\tcreatedbyname as string,\n\t\tcreatedbyyominame as string,\n\t\tcreatedon as timestamp,\n\t\tcreatedonbehalfby as string,\n\t\tcreatedonbehalfbyname as string,\n\t\tcreatedonbehalfbyyominame as string,\n\t\timportsequencenumber as integer,\n\t\tmaersk_adjustedmrl as integer,\n\t\tmaersk_adjustedmrlbox as integer,\n\t\tmaersk_datahash as string,\n\t\tmaersk_equipmentid as string,\n\t\tmaersk_equipmentidname as string,\n\t\tmaersk_equipmentredeliverystatus as boolean,\n\t\tmaersk_equipmentsize as integer,\n\t\tmaersk_expirydate as timestamp,\n\t\tmaersk_isempty as boolean,\n\t\tmaersk_issales as boolean,\n\t\tmaersk_isshouldrepair as boolean,\n\t\tmaersk_issurplus as boolean,\n\t\tmaersk_isurgent as boolean,\n\t\tmaersk_lastmove as integer,\n\t\tmaersk_lastmovetimestamp as timestamp,\n\t\tmaersk_location as string,\n\t\tmaersk_locationname as string,\n\t\tmaersk_name as string,\n\t\tmaersk_reasoningforrejection as string,\n\t\tmaersk_totalcostunderwarranty as integer,\n\t\tmaersk_totalcostwithmaerskparts as integer,\n\t\tmaersk_totalpricenotcoveredbywarranty as integer,\n\t\tmaersk_workorderid as string,\n\t\tmodifiedby as string,\n\t\tmodifiedbyname as string,\n\t\tmodifiedbyyominame as string,\n\t\tmodifiedon as timestamp,\n\t\tmodifiedonbehalfby as string,\n\t\tmodifiedonbehalfbyname as string,\n\t\tmodifiedonbehalfbyyominame as string,\n\t\toverriddencreatedon as timestamp,\n\t\townerid as string,\n\t\towneridname as string,\n\t\towneridtype as string,\n\t\towneridyominame as string,\n\t\towningbusinessunit as string,\n\t\towningteam as string,\n\t\towninguser as string,\n\t\tstatecode as integer,\n\t\tstatuscode as integer,\n\t\ttimezoneruleversionnumber as integer,\n\t\tutcconversiontimezonecode as integer,\n\t\tversionnumber as long\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlworkorder']) ~> dmrlworkorderdataverseData\nsource(output(\n\t\tmaersk_reasoning as string,\n\t\tmaersk_location as string,\n\t\tmaersk_dmrlcontainerid as string,\n\t\tmaersk_mrlbox as integer,\n\t\tmaersk_equipmentmanufacturer as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_issurplus as boolean,\n\t\tmaersk_name as string,\n\t\tmaersk_issales as boolean,\n\t\tmaersk_mrlunit as integer,\n\t\tmaersk_damageprediction as double,\n\t\tmaersk_containertype as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlcontainer']) ~> dmrlcontainerdatafromblob\nSelectRequiredColumns derive(work_order_id = trim(toString(byName('work_order_id'))),\n\t\tequipment_id = trim(toString(byName('equipment_id'))),\n\t\tis_sales = toBoolean(case(upper(trim(toString(byName('is_sales'))))=='true',\"1\",\"0\")),\n\t\tis_surplus = toBoolean(case(upper(trim(toString(byName('is_surplus'))))=='true',\"1\",\"0\")),\n\t\tequipment_size = case(toInteger(byName('equipment_size'))==20,379430000,\r\n    case(toInteger(byName('equipment_size'))==40,379430001,\r\n        case(toInteger(byName('equipment_size'))==45,379430002))),\n\t\tlocation_id = trim(toString(byName('location_id'))),\n\t\tlast_move_timestamp = toTimestamp(toString(byName('move_timestamp'))),\n\t\tis_empty = toBoolean(case(upper(trim(toString(byName('is_empty'))))=='true',\"1\",\"0\")),\n\t\tlast_move = case(trim(toString(byName('last_move')))=='GATE-IN',379430000,\r\n    case(trim(toString(byName('last_move')))=='GATE-OUT',379430001,\r\n        case(trim(toString(byName('last_move')))=='DISCHARG',379430002,\r\n            case(trim(toString(byName('last_move')))=='LOAD',379430003,\r\n                case(trim(toString(byName('last_move')))=='ON-RAIL',379430004,\r\n                    case(trim(toString(byName('last_move')))=='OFF-RAIL',379430005,\r\n                        case(trim(toString(byName('last_move')))=='STRIPPIN',379430006))))))),\n\t\tequipment_redelivery_status = toBoolean(case(upper(trim(toString(byName('equipment_redelivery_status'))))=='true',\"1\",\"0\")),\n\t\tadjusted_MRL = toInteger(byName('adjusted_MRL')),\n\t\tadjusted_MRL_box = toInteger(byName('adjusted_MRL_box')),\n\t\ttotal_cost_with_maersk_parts_usd = toInteger(byName('total_cost_with_maersk_parts_usd')),\n\t\ttotal_price_not_covered_by_warranty = toInteger(byName('total_price_not_covered_by_warranty')),\n\t\ttotal_cost_under_warranty = toInteger(byName('total_cost_under_warranty')),\n\t\texpiry_date = toTimestamp(toString(byName('expiry_date'))),\n\t\tis_should_repair = toBoolean(case(upper(trim(toString(byName('is_should_repair'))))=='true',\"1\",\"0\")),\n\t\treasoning_for_rejection = trim(toString(byName('reasoning_for_rejection'))),\n\t\twork_order_created_date = toTimestamp(toString(byName('work_order_created_date'))),\n\t\tis_urgent = toBoolean(case(upper(trim(toString(byName('is_urgent'))))=='true',\"1\",\"0\"))) ~> DataTransformation\nDataTransformation, sitedatafromblob lookup(location_id == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupLocation\nLookupLocation select(mapColumn(\n\t\twork_order_id,\n\t\tequipment_id,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlast_move_timestamp,\n\t\tis_empty,\n\t\tlast_move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\treasoning_for_rejection,\n\t\twork_order_created_date,\n\t\tis_urgent,\n\t\tis_should_repair,\n\t\tLocation = maersk_siteid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectLocation\nSelectDMRLContainerId derive(checksum = sha1(work_order_id,is_sales,is_surplus,equipment_size,last_move_timestamp,is_empty,last_move,equipment_redelivery_status,adjusted_MRL,adjusted_MRL_box,total_cost_with_maersk_parts_usd,total_price_not_covered_by_warranty,total_cost_under_warranty,expiry_date,reasoning_for_rejection,work_order_created_date,is_urgent,is_should_repair,Location,equipment_id)) ~> checksum\nStagingBlobDMRLWorkorder select(mapColumn(\n\t\twork_order_id,\n\t\tequipment_id,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlocation_id,\n\t\tlast_move_timestamp = move_timestamp,\n\t\tis_empty,\n\t\tlast_move = move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\tis_should_repair = is_box_repair,\n\t\treasoning_for_rejection,\n\t\twork_order_created_date,\n\t\tis_urgent = urgent\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumns\nSelectLocation, dmrlcontainerdatafromblob lookup(equipment_id == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupDMRLContainerId\nLookupDMRLContainerId select(mapColumn(\n\t\twork_order_id,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlast_move_timestamp,\n\t\tis_empty,\n\t\tlast_move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\treasoning_for_rejection,\n\t\twork_order_created_date,\n\t\tis_urgent,\n\t\tis_should_repair,\n\t\tLocation,\n\t\tequipment_id = maersk_dmrlcontainerid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectDMRLContainerId\nchecksum, dmrlworkorderdataverseData join(work_order_id == maersk_name,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> RelateTwoDataSets\nRelateTwoDataSets filter(case(maersk_datahash==checksum, false(), true())) ~> FilterOnlyNewRows\nFilterOnlyNewRows select(mapColumn(\n\t\twork_order_id,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlast_move_timestamp,\n\t\tis_empty,\n\t\tlast_move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\treasoning_for_rejection,\n\t\twork_order_created_date,\n\t\tis_urgent,\n\t\tis_should_repair,\n\t\tLocation,\n\t\tequipment_id,\n\t\tchecksum\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumnsWithChecksum\nSelectRequiredColumnsWithChecksum sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobDMRLWorkorder"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load EquipmentInventory Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSP"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_equipment_inventory_csp_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobEquipmentInventoryCSP"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_user_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "userdatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_team_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "teamdatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_country_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "countrydatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "sitedatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_product_index_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "productindexdatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_pool_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "pooldatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_Account_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "accountdatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_equipment_inventory_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dataversedata"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_equipment_inventory_csp_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlob"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "LookupSalesManagerDryColumn"
+						},
+						{
+							"name": "SelectSalesManagerDry"
+						},
+						{
+							"name": "LookupSalesManagerReefer"
+						},
+						{
+							"name": "SelectSalesManagerRefer"
+						},
+						{
+							"name": "LookupRegionalManagerDry"
+						},
+						{
+							"name": "SelectRegionalManagerDry"
+						},
+						{
+							"name": "LookupRegionalManagerReefer"
+						},
+						{
+							"name": "SelectRegionalManagerReefer"
+						},
+						{
+							"name": "LookupTeam"
+						},
+						{
+							"name": "SelectTeam"
+						},
+						{
+							"name": "LookupLoadCountry"
+						},
+						{
+							"name": "SelectLoadCountry"
+						},
+						{
+							"name": "LookupDischargeCountry"
+						},
+						{
+							"name": "SelectDischargeCountry"
+						},
+						{
+							"name": "LookupRepairCountry"
+						},
+						{
+							"name": "SelectRepairCountry"
+						},
+						{
+							"name": "LookupRepairLocation"
+						},
+						{
+							"name": "SelectRepairLocation"
+						},
+						{
+							"name": "LookupCurrentCountry"
+						},
+						{
+							"name": "SelectCurrentCountry"
+						},
+						{
+							"name": "LookupCurrentSite"
+						},
+						{
+							"name": "SelectCurrentSite"
+						},
+						{
+							"name": "LookupCurrentPool"
+						},
+						{
+							"name": "SelectCurrentPool"
+						},
+						{
+							"name": "LookupProductIndex"
+						},
+						{
+							"name": "SelectProductIndex"
+						},
+						{
+							"name": "LookupClient"
+						},
+						{
+							"name": "SelectClient"
+						},
+						{
+							"name": "LookupKeyToProduct"
+						},
+						{
+							"name": "SelectKeyToProduct"
+						},
+						{
+							"name": "Checksum"
+						},
+						{
+							"name": "RelateTwoDataSets"
+						},
+						{
+							"name": "FilterOnlyNewRows"
+						},
+						{
+							"name": "SelectRequiredColumns"
+						}
+					],
+					"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['equipmentinventorycsp']) ~> StagingBlobEquipmentInventoryCSP\nsource(output(\n\t\tqueueid as string,\n\t\tsystemuserid as string,\n\t\tinternalemailaddress as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['systemuser/user.parquet']) ~> userdatafromblob\nsource(output(\n\t\tteamid as string,\n\t\tname as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['team/*.parquet']) ~> teamdatafromblob\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_countrycode as string,\n\t\tmaersk_countryid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['country/*.parquet']) ~> countrydatafromblob\nsource(output(\n\t\tmaersk_country as string,\n\t\tmaersk_siteid as string,\n\t\tmaersk_name as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> sitedatafromblob\nsource(output(\n\t\tstatecode as integer,\n\t\tstatuscode as integer,\n\t\tcreatedon as timestamp,\n\t\timportsequencenumber as integer,\n\t\tmaersk_previouscategory as string,\n\t\tmaersk_category as string,\n\t\townerid as string,\n\t\tmodifiedon as timestamp,\n\t\tmaersk_keyfrominventory as string,\n\t\tmaersk_productsubtype as string,\n\t\tmaersk_productgroup as string,\n\t\tmaersk_producttype as string,\n\t\tmaersk_isignorebreakeven as boolean,\n\t\tmodifiedby as string,\n\t\tmaersk_pricecategory as string,\n\t\tmaersk_isopenforsale as boolean,\n\t\tmaersk_name as string,\n\t\tcreatedby as string,\n\t\towningbusinessunit as string,\n\t\tmaersk_searchname as string,\n\t\towninguser as string,\n\t\tmaersk_productindexid as string,\n\t\tmaersk_priceproducttype as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['productindex/*.parquet']) ~> productindexdatafromblob\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_poolid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['pool/*.parquet']) ~> pooldatafromblob\nsource(output(\n\t\tmaersk_scvcode as string,\n\t\taccountid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['account/*.parquet']) ~> accountdatafromblob\nsource(output(\n\t\tcreatedby as string,\n\t\tcreatedbyname as string,\n\t\tcreatedbyyominame as string,\n\t\tcreatedon as timestamp,\n\t\tcreatedonbehalfby as string,\n\t\tcreatedonbehalfbyname as string,\n\t\tcreatedonbehalfbyyominame as string,\n\t\texchangerate as decimal(38,18),\n\t\timportsequencenumber as integer,\n\t\tmaersk_actfor as string,\n\t\tmaersk_actloc_short as string,\n\t\tmaersk_agenormal as integer,\n\t\tmaersk_allowedforsale as boolean,\n\t\tmaersk_area as string,\n\t\tmaersk_areaname as string,\n\t\tmaersk_billofladingnumber as string,\n\t\tmaersk_bookingreference as string,\n\t\tmaersk_cherrypickingfee as decimal(38,18),\n\t\tmaersk_cherrypickingfee_base as decimal(38,18),\n\t\tmaersk_client as string,\n\t\tmaersk_clientname as string,\n\t\tmaersk_clientyominame as string,\n\t\tmaersk_containerid as string,\n\t\tmaersk_current_loc_dsc as string,\n\t\tmaersk_currentcountry as string,\n\t\tmaersk_currentcountryname as string,\n\t\tmaersk_currentpool as string,\n\t\tmaersk_currentpoolname as string,\n\t\tmaersk_currentsite as string,\n\t\tmaersk_currentsitename as string,\n\t\tmaersk_damagecode as integer,\n\t\tmaersk_damageprediction as decimal(38,18),\n\t\tmaersk_datahash as string,\n\t\tmaersk_discharge_port_to_display as boolean,\n\t\tmaersk_dischargecountry as string,\n\t\tmaersk_dischargecountryname as string,\n\t\tmaersk_dischargesite as string,\n\t\tmaersk_emrunitcosts as double,\n\t\tmaersk_eqioflt as string,\n\t\tmaersk_equipmentreefertype as string,\n\t\tmaersk_evacuationcostperbox as double,\n\t\tmaersk_gatebuygateindone as boolean,\n\t\tmaersk_hqminprice as integer,\n\t\tmaersk_ignorebreakevenprice as boolean,\n\t\tmaersk_infleetyear as string,\n\t\tmaersk_inventorytype as integer,\n\t\tmaersk_isempty as boolean,\n\t\tmaersk_ispassthrough as boolean,\n\t\tmaersk_keytoprice as string,\n\t\tmaersk_keytoproduct as string,\n\t\tmaersk_keytoproductname as string,\n\t\tmaersk_last_move_from_fast_track as integer,\n\t\tmaersk_leasingcompany as string,\n\t\tmaersk_leasingcontract as string,\n\t\tmaersk_load_port_to_display as boolean,\n\t\tmaersk_loadcountry as string,\n\t\tmaersk_loadcountryname as string,\n\t\tmaersk_loadsite as string,\n\t\tmaersk_longstandingdays as string,\n\t\tmaersk_machinerytype as string,\n\t\tmaersk_mercmode as string,\n\t\tmaersk_minsalesprice as decimal(38,18),\n\t\tmaersk_minsalesprice_base as decimal(38,18),\n\t\tmaersk_move as integer,\n\t\tmaersk_move_timestamp_gate_buy as timestamp,\n\t\tmaersk_movetimestamp as timestamp,\n\t\tmaersk_mrlbox as integer,\n\t\tmaersk_mrlunit as integer,\n\t\tmaersk_name as string,\n\t\tmaersk_oldcategory as string,\n\t\tmaersk_oldcategoryname as string,\n\t\tmaersk_operatorcode as integer,\n\t\tmaersk_pretripinspectionstatus as integer,\n\t\tmaersk_previousmove as integer,\n\t\tmaersk_pricecategoryfromprice as string,\n\t\tmaersk_pricetocompare as integer,\n\t\tmaersk_productindex as string,\n\t\tmaersk_productindexname as string,\n\t\tmaersk_productsubtype as string,\n\t\tmaersk_reasoning as string,\n\t\tmaersk_region as string,\n\t\tmaersk_regionalmanagerdry as string,\n\t\tmaersk_regionalmanagerdryname as string,\n\t\tmaersk_regionalmanagerdryyominame as string,\n\t\tmaersk_regionalmanagerminprice as integer,\n\t\tmaersk_regionalmanagerreefer as string,\n\t\tmaersk_regionalmanagerreefername as string,\n\t\tmaersk_regionalmanagerreeferyominame as string,\n\t\tmaersk_regionname as string,\n\t\tmaersk_releasefreetime as integer,\n\t\tmaersk_repaircountry as string,\n\t\tmaersk_repaircountryname as string,\n\t\tmaersk_repairestimate as double,\n\t\tmaersk_repairlocation as string,\n\t\tmaersk_repairlocationname as string,\n\t\tmaersk_salesmanagerdry as string,\n\t\tmaersk_salesmanagerdryname as string,\n\t\tmaersk_salesmanagerdryyominame as string,\n\t\tmaersk_salesmanagerminprice as integer,\n\t\tmaersk_salesmanagerreefer as string,\n\t\tmaersk_salesmanagerreefername as string,\n\t\tmaersk_salesmanagerreeferyominame as string,\n\t\tmaersk_salesmovedate as timestamp,\n\t\tmaersk_salesprice as integer,\n\t\tmaersk_size as integer,\n\t\tmaersk_team as string,\n\t\tmaersk_teamname as string,\n\t\tmaersk_teamyominame as string,\n\t\tmaersk_yearofmake as string,\n\t\tmodifiedby as string,\n\t\tmodifiedbyname as string,\n\t\tmodifiedbyyominame as string,\n\t\tmodifiedon as timestamp,\n\t\tmodifiedonbehalfby as string,\n\t\tmodifiedonbehalfbyname as string,\n\t\tmodifiedonbehalfbyyominame as string,\n\t\toverriddencreatedon as timestamp,\n\t\townerid as string,\n\t\towneridname as string,\n\t\towneridtype as string,\n\t\towneridyominame as string,\n\t\towningbusinessunit as string,\n\t\towningteam as string,\n\t\towninguser as string,\n\t\tstatecode as integer,\n\t\tstatuscode as integer,\n\t\ttimezoneruleversionnumber as integer,\n\t\ttransactioncurrencyid as string,\n\t\ttransactioncurrencyidname as string,\n\t\tutcconversiontimezonecode as integer,\n\t\tversionnumber as long\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['equipmentinventorycsp']) ~> dataversedata\nStagingBlobEquipmentInventoryCSP derive(eqpno = trim(toString(byName('eqpno'))),\n\t\trepair_location_id = trim(toString(byName('repair_location_id'))),\n\t\tmove_timestamp = toTimestamp(byName('move_timestamp')),\n\t\tmove = case(trim(toString(byName('move')))=='GATE-IN',379430000,\r\n    case(trim(toString(byName('move')))=='GATE-OUT',379430001,\r\n        case(trim(toString(byName('move')))=='DISCHARG',379430002,\r\n            case(trim(toString(byName('move')))=='LOAD',379430003,\r\n                case(trim(toString(byName('move')))=='ON-RAIL',379430004,\r\n                    case(trim(toString(byName('move')))=='OFF-RAIL',379430005,\r\n                        case(trim(toString(byName('move')))=='STRIPPIN',379430006))))))),\n\t\tprevious_move = case(trim(toString(byName('move')))=='GATE-IN',379430000,\r\n    case(trim(toString(byName('move')))=='GATE-OUT',379430001,\r\n        case(trim(toString(byName('move')))=='DISCHARG',379430002,\r\n            case(trim(toString(byName('move')))=='LOAD',379430003,\r\n                case(trim(toString(byName('move')))=='ON-RAIL',379430004,\r\n                    case(trim(toString(byName('move')))=='OFF-RAIL',379430005,\r\n                        case(trim(toString(byName('move')))=='STRIPPIN',379430006))))))),\n\t\tactfor = trim(toString(byName('actfor'))),\n\t\tstempty = toBoolean(case(upper(trim(toString(byName('stempty'))))=='TRUE',\"1\",\"0\")),\n\t\tsubtype = trim(toString(byName('subtype'))),\n\t\tcountry_cd = trim(toString(byName('country_cd'))),\n\t\tcurrent_site = trim(toString(byName('current_site'))),\n\t\tstselscr = trim(toString(byName('stselscr'))),\n\t\toperator_code = case(trim(toString(byName('operator_code')))=='SAL',379430000,\r\n    case(trim(toString(byName('operator_code')))=='SEA',379430001,\r\n        case(trim(toString(byName('operator_code')))=='TTL',379430002))),\n\t\tdamage_code = case(toInteger(byName('damage_code'))==1,379430000,\r\n    case(toInteger(byName('damage_code'))==2,379430001,\r\n        case(toInteger(byName('damage_code'))==3,379430002,\r\n         case(toInteger(byName('damage_code'))==4,379430003)))),\n\t\tbill_of_lading_number = trim(toString(byName('bill_of_lading_number'))),\n\t\tbooking_reference = trim(toString(byName('booking_reference'))),\n\t\tlongstanding_days = trim(toString(byName('longstanding_days'))),\n\t\tactloc_short = trim(toString(byName('actloc_short'))),\n\t\tpre_trip_inspection_status = case(trim(toString(byName('pre_trip_inspection_status')))=='GREEN',379430000,\r\n    case(trim(toString(byName('pre_trip_inspection_status')))=='RED',379430001,\r\n        case(trim(toString(byName('pre_trip_inspection_status')))=='Release to Booking (BLUE)',379430002,\r\n            case(trim(toString(byName('pre_trip_inspection_status')))=='Assigned to Booking (UNKNOWN)',379430003)))),\n\t\tyear_of_make = trim(toString(byName('year_of_make'))),\n\t\tinfleet_year = toTimestamp(byName('infleet_year')),\n\t\tmachinery_type = trim(toString(byName('machinery_type'))),\n\t\tleasing_contract = trim(toString(byName('leasing_contract'))),\n\t\tleasing_company = trim(toString(byName('leasing_company'))),\n\t\trelease_free_time = toInteger(byName('release_free_time')),\n\t\tallowed_for_sale = toBoolean(case(upper(trim(toString(byName('allowed_for_sale'))))=='Y',\"1\",\"0\")),\n\t\tmerc_mode = trim(toString(byName('merc_mode'))),\n\t\tequipment_id = trim(toString(byName('equipment_id'))),\n\t\trepair_estimate = toDouble(byName('repair_estimate')),\n\t\teqioflt = trim(toString(byName('eqioflt'))),\n\t\tequipment_reefer_type = trim(toString(byName('equipment_reefer_type'))),\n\t\tregional_manager_dry = trim(toString(byName('regional_manager_dry'))),\n\t\tregional_manager_reefer = trim(toString(byName('regional_manager_reefer'))),\n\t\tsales_manager_dry = trim(toString(byName('sales_manager_dry'))),\n\t\tsales_manager_reefer = trim(toString(byName('sales_manager_reefer'))),\n\t\tcountry = trim(toString(byName('country'))),\n\t\tcurrent_pool = trim(toString(byName('current_pool'))),\n\t\tcurrent_loc_dsc = trim(toString(byName('current_loc_dsc'))),\n\t\tteam = trim(toString(byName('team'))),\n\t\tage_normal = toInteger(byName('age_normal')),\n\t\tproduct_group = trim(toString(byName('product_group'))),\n\t\tcategory = trim(toString(byName('category'))),\n\t\told_category = trim(toString(byName('old_category'))),\n\t\tis_pass_through = toBoolean(case(upper(trim(toString(byName('is_pass_through'))))=='TRUE',\"1\",\"0\")),\n\t\tproduct_index = trim(toString(byName('product_index'))),\n\t\tprice_category = trim(toString(byName('price_category'))),\n\t\tlevel_3_size = case(toInteger(byName('level_3_size'))==20,379430000,\r\n    case(toInteger(byName('level_3_size'))==40,379430001,\r\n        case(toInteger(byName('level_3_size'))==45,379430002))),\n\t\tlevel_3_product_type = trim(toString(byName('level_3_product_type'))),\n\t\tignore_breakeven = toBoolean(case(upper(trim(toString(byName('ignore_breakeven'))))=='Y',\"1\",\"0\")),\n\t\tEvacuation_cost_per_box = toDouble(byName('Evacuation_cost_per_box')),\n\t\temr_unit_cost = toDouble(byName('emr_unit_cost')),\n\t\tcurrent_site_type = trim(toString(byName('current_site_type'))),\n\t\tbreak_even_price = toInteger(byName('break_even_price')),\n\t\tcherry_picking_fee = toInteger(byName('cherry_picking_fee')),\n\t\tmove_timestamp_gate_buy = toTimestamp(byName('move_timestamp_gate_buy')),\n\t\tgate_buy_scv_code = trim(toString(byName('gate_buy_scv_code'))),\n\t\tinventory_type = case(trim(toString(byName('inventory_type')))=='Normal',379430000,\r\n    case(trim(toString(byName('inventory_type')))=='Gate-Buy',379430001,\r\n        case(trim(toString(byName('inventory_type')))=='Pick-Up',379430002,0))),\n\t\tgate_buy_gate_in_done = toBoolean(case(upper(trim(toString(byName('gate_buy_gate_in_done'))))=='Y',\"1\",\"0\")),\n\t\tsales_move_date = toTimestamp(byName('sales_move_date')),\n\t\trepair_country_id = trim(toString(byName('repair_country_id'))),\n\t\tdischarge_site = trim(toString(byName('discharge_site'))),\n\t\tdischarge_country = trim(toString(byName('discharge_country'))),\n\t\tdischarge_port_to_display = toBoolean(case(upper(trim(toString(byName('discharge_port_to_display'))))=='Y',\"1\",\"0\")),\n\t\tload_port = trim(toString(byName('load_port'))),\n\t\tload_country = trim(toString(byName('load_country'))),\n\t\tload_port_to_display = toBoolean(case(upper(trim(toString(byName('load_port_to_display'))))=='Y',\"1\",\"0\")),\n\t\tlast_move_from_fast_track = case(trim(toString(byName('last_move_from_fast_track')))=='GATE-IN',379430000,\r\n    case(trim(toString(byName('last_move_from_fast_track')))=='GATE-OUT',379430001,\r\n        case(trim(toString(byName('last_move_from_fast_track')))=='DISCHARG',379430002,\r\n            case(trim(toString(byName('last_move_from_fast_track')))=='LOAD',379430003,\r\n                case(trim(toString(byName('last_move_from_fast_track')))=='ON-RAIL',379430004,\r\n                    case(trim(toString(byName('last_move_from_fast_track')))=='OFF-RAIL',379430005,\r\n                        case(trim(toString(byName('last_move_from_fast_track')))=='STRIPPIN',379430006))))))),\n\t\tkey_to_product = trim(toString(byName('key_to_product'))),\n\t\tkey_to_price = trim(toString(byName('key_to_price'))),\n\t\tprice_category_from_price = trim(toString(byName('price_category_from_price'))),\n\t\tsales_price = toInteger(byName('sales_price')),\n\t\tprice_to_compare = toInteger(byName('price_to_compare')),\n\t\tsales_manager_minimum_price = toInteger(byName('sales_manager_minimum_price')),\n\t\tregional_manager_minimum_price = toInteger(byName('regional_manager_minimum_price')),\n\t\theadquarter_minimum_price = toInteger(byName('headquarter_minimum_price'))) ~> DataTransformation\nDataTransformation, userdatafromblob lookup(sales_manager_dry == internalemailaddress,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupSalesManagerDryColumn\nLookupSalesManagerDryColumn select(mapColumn(\n\t\teqpno,\n\t\trepair_location_id,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tcountry_cd,\n\t\tcurrent_site,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tsales_manager_reefer,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tteam,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\trepair_country_id,\n\t\tdischarge_site,\n\t\tdischarge_country,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_country,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry_id = systemuserid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectSalesManagerDry\nSelectSalesManagerDry, userdatafromblob lookup(sales_manager_reefer == internalemailaddress,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupSalesManagerReefer\nLookupSalesManagerReefer select(mapColumn(\n\t\teqpno,\n\t\trepair_location_id,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tcountry_cd,\n\t\tcurrent_site,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tteam,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\trepair_country_id,\n\t\tdischarge_site,\n\t\tdischarge_country,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_country,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry = sales_manager_dry_id,\n\t\tsales_manager_reefer_id = systemuserid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectSalesManagerRefer\nSelectSalesManagerRefer, userdatafromblob lookup(regional_manager_dry == internalemailaddress,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupRegionalManagerDry\nLookupRegionalManagerDry select(mapColumn(\n\t\teqpno,\n\t\trepair_location_id,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tcountry_cd,\n\t\tcurrent_site,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tregional_manager_reefer,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tteam,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\trepair_country_id,\n\t\tdischarge_site,\n\t\tdischarge_country,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_country,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer = sales_manager_reefer_id,\n\t\tregional_manager_dry_id = systemuserid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRegionalManagerDry\nSelectRegionalManagerDry, userdatafromblob lookup(regional_manager_reefer == internalemailaddress,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupRegionalManagerReefer\nLookupRegionalManagerReefer select(mapColumn(\n\t\teqpno,\n\t\trepair_location_id,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tcountry_cd,\n\t\tcurrent_site,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tteam,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\trepair_country_id,\n\t\tdischarge_site,\n\t\tdischarge_country,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_country,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry = regional_manager_dry_id,\n\t\tregional_manager_reefer = systemuserid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRegionalManagerReefer\nSelectRegionalManagerReefer, teamdatafromblob lookup(team == name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupTeam\nLookupTeam select(mapColumn(\n\t\teqpno,\n\t\trepair_location_id,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tcountry_cd,\n\t\tcurrent_site,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\trepair_country_id,\n\t\tdischarge_site,\n\t\tdischarge_country,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_country,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectTeam\nSelectTeam, countrydatafromblob lookup(load_country == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupLoadCountry\nLookupLoadCountry select(mapColumn(\n\t\teqpno,\n\t\trepair_location_id,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tcountry_cd,\n\t\tcurrent_site,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\trepair_country_id,\n\t\tdischarge_site,\n\t\tdischarge_country,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectLoadCountry\nSelectLoadCountry, countrydatafromblob lookup(discharge_country == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupDischargeCountry\nLookupDischargeCountry select(mapColumn(\n\t\teqpno,\n\t\trepair_location_id,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tcountry_cd,\n\t\tcurrent_site,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\trepair_country_id,\n\t\tdischarge_site,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid,\n\t\tdischarge_countryid = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectDischargeCountry\nSelectDischargeCountry, countrydatafromblob lookup(repair_country_id == maersk_countrycode,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupRepairCountry\nLookupRepairCountry select(mapColumn(\n\t\teqpno,\n\t\trepair_location_id,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tcountry_cd,\n\t\tcurrent_site,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\tdischarge_site,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid,\n\t\tdischarge_countryid,\n\t\trepair_country_id = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRepairCountry\nSelectCurrentCountry, sitedatafromblob lookup(repair_location_id == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupRepairLocation\nLookupRepairLocation select(mapColumn(\n\t\teqpno,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tcurrent_site,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\tdischarge_site,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid,\n\t\tdischarge_countryid,\n\t\trepair_country_id,\n\t\trepair_location_id = maersk_siteid,\n\t\tcurrent_country\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRepairLocation\nSelectRepairCountry, countrydatafromblob lookup(country_cd == maersk_countrycode,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCurrentCountry\nLookupCurrentCountry select(mapColumn(\n\t\teqpno,\n\t\trepair_location_id,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tcurrent_site,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\tdischarge_site,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid,\n\t\tdischarge_countryid,\n\t\trepair_country_id,\n\t\tcurrent_country = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCurrentCountry\nSelectRepairLocation, sitedatafromblob lookup(current_site == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCurrentSite\nLookupCurrentSite select(mapColumn(\n\t\teqpno,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_pool,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\tdischarge_site,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid,\n\t\tdischarge_countryid,\n\t\trepair_country_id,\n\t\trepair_location_id,\n\t\tcurrent_country,\n\t\tcurrent_site = maersk_siteid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCurrentSite\nSelectCurrentSite, pooldatafromblob lookup(current_pool == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCurrentPool\nLookupCurrentPool select(mapColumn(\n\t\teqpno,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\told_category,\n\t\tis_pass_through,\n\t\tproduct_index,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\tdischarge_site,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid,\n\t\tdischarge_countryid,\n\t\trepair_country_id,\n\t\trepair_location_id,\n\t\tcurrent_country,\n\t\tcurrent_site,\n\t\tcurrent_pool = maersk_poolid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCurrentPool\nSelectCurrentPool, productindexdatafromblob lookup(product_index == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupProductIndex\nLookupProductIndex select(mapColumn(\n\t\teqpno,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\tis_pass_through,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tgate_buy_scv_code,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\tdischarge_site,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid,\n\t\tdischarge_countryid,\n\t\trepair_country_id,\n\t\trepair_location_id,\n\t\tcurrent_country,\n\t\tcurrent_site,\n\t\tcurrent_pool,\n\t\told_category,\n\t\tproduct_index = maersk_productindexid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectProductIndex\nSelectProductIndex, accountdatafromblob lookup(gate_buy_scv_code == maersk_scvcode,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupClient\nLookupClient select(mapColumn(\n\t\teqpno,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\tis_pass_through,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\tdischarge_site,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_product,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid,\n\t\tdischarge_countryid,\n\t\trepair_country_id,\n\t\trepair_location_id,\n\t\tcurrent_country,\n\t\tcurrent_site,\n\t\tcurrent_pool,\n\t\told_category,\n\t\tproduct_index,\n\t\tclient = accountid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectClient\nSelectClient, productindexdatafromblob lookup(key_to_product == maersk_keyfrominventory,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupKeyToProduct\nLookupKeyToProduct select(mapColumn(\n\t\teqpno,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\tis_pass_through,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\tdischarge_site,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid,\n\t\tdischarge_countryid,\n\t\trepair_country_id,\n\t\trepair_location_id,\n\t\tcurrent_country,\n\t\tcurrent_site,\n\t\tcurrent_pool,\n\t\told_category,\n\t\tproduct_index,\n\t\tclient,\n\t\tkey_to_product = maersk_productindexid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectKeyToProduct\nSelectKeyToProduct derive(checksum = sha1(columns())) ~> Checksum\nChecksum, dataversedata join(eqpno == maersk_name,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> RelateTwoDataSets\nRelateTwoDataSets filter(case(maersk_datahash==checksum, false(), true())) ~> FilterOnlyNewRows\nFilterOnlyNewRows select(mapColumn(\n\t\teqpno,\n\t\tmove_timestamp,\n\t\tmove,\n\t\tprevious_move,\n\t\tactfor,\n\t\tstempty,\n\t\tsubtype,\n\t\tstselscr,\n\t\toperator_code,\n\t\tdamage_code,\n\t\tbill_of_lading_number,\n\t\tbooking_reference,\n\t\tlongstanding_days,\n\t\tactloc_short,\n\t\tpre_trip_inspection_status,\n\t\tyear_of_make,\n\t\tinfleet_year,\n\t\tmachinery_type,\n\t\tleasing_contract,\n\t\tleasing_company,\n\t\trelease_free_time,\n\t\tallowed_for_sale,\n\t\tmerc_mode,\n\t\tequipment_id,\n\t\trepair_estimate,\n\t\teqioflt,\n\t\tequipment_reefer_type,\n\t\tcountry,\n\t\tcurrent_loc_dsc,\n\t\tage_normal,\n\t\tproduct_group,\n\t\tcategory,\n\t\tis_pass_through,\n\t\tprice_category,\n\t\tlevel_3_size,\n\t\tlevel_3_product_type,\n\t\tignore_breakeven,\n\t\tEvacuation_cost_per_box,\n\t\temr_unit_cost,\n\t\tcurrent_site_type,\n\t\tbreak_even_price,\n\t\tcherry_picking_fee,\n\t\tmove_timestamp_gate_buy,\n\t\tinventory_type,\n\t\tgate_buy_gate_in_done,\n\t\tsales_move_date,\n\t\tdischarge_site,\n\t\tdischarge_port_to_display,\n\t\tload_port,\n\t\tload_port_to_display,\n\t\tlast_move_from_fast_track,\n\t\tkey_to_price,\n\t\tprice_category_from_price,\n\t\tsales_price,\n\t\tprice_to_compare,\n\t\tsales_manager_minimum_price,\n\t\tregional_manager_minimum_price,\n\t\theadquarter_minimum_price,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tregional_manager_dry,\n\t\tregional_manager_reefer,\n\t\tteamid,\n\t\tload_countryid,\n\t\tdischarge_countryid,\n\t\trepair_country_id,\n\t\trepair_location_id,\n\t\tcurrent_country,\n\t\tcurrent_site,\n\t\tcurrent_pool,\n\t\tproduct_index,\n\t\tclient,\n\t\tkey_to_product,\n\t\tchecksum\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumns\nSelectRequiredColumns sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlob"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load_Intermodal_Potential_Container Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSS"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_country_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "countrydatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "sitedatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_intermodalpotentialcontainertodeliver_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobIntermodelPotentialContainerDataToDeliver"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_intermodalpotentialcontainerstodeliver_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "dataversedata"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_intermodalpotentialcontainerstodeliver_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobIntermodalpotentialcontainerstodeliver",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "LookupDiplaLocationId"
+						},
+						{
+							"name": "SelectDiplaLocation"
+						},
+						{
+							"name": "LookupLastRailDestination"
+						},
+						{
+							"name": "SelectLastRailDestination"
+						},
+						{
+							"name": "LookupMoveLocationId"
+						},
+						{
+							"name": "SelectMoveLocationId"
+						},
+						{
+							"name": "LookupCountryOfPortEntry"
+						},
+						{
+							"name": "SelectCountryOfPortEntry"
+						},
+						{
+							"name": "checksum"
+						},
+						{
+							"name": "RelateTwoDatasets"
+						},
+						{
+							"name": "FilterOnlyNewRows"
+						},
+						{
+							"name": "SelectRequiredColumns"
+						}
+					],
+					"script": "source(output(\n\t\tmaersk_name as string,\n\t\tmaersk_countrycode as string,\n\t\tmaersk_countryid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['country/*.parquet']) ~> countrydatafromblob\nsource(output(\n\t\tmaersk_siteid as string,\n\t\tmaersk_name as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> sitedatafromblob\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['intermodalpotentialcontainerstodeliver']) ~> StagingBlobIntermodelPotentialContainerDataToDeliver\nsource(output(\n\t\tcreatedby as string,\n\t\tcreatedbyname as string,\n\t\tcreatedbyyominame as string,\n\t\tcreatedon as timestamp,\n\t\tcreatedonbehalfby as string,\n\t\tcreatedonbehalfbyname as string,\n\t\tcreatedonbehalfbyyominame as string,\n\t\timportsequencenumber as integer,\n\t\tmaersk_action as string,\n\t\tmaersk_allocationdate as timestamp,\n\t\tmaersk_bookingnumber as string,\n\t\tmaersk_breakevenpricealtpool as decimal(38,18),\n\t\tmaersk_breakevenpricepool as decimal(38,18),\n\t\tmaersk_caseid as string,\n\t\tmaersk_consigneename as string,\n\t\tmaersk_consigneescvcode as string,\n\t\tmaersk_countryofportentry as string,\n\t\tmaersk_countryofportentryname as string,\n\t\tmaersk_datahash as string,\n\t\tmaersk_destinationlocationid as string,\n\t\tmaersk_destinationlocationname as string,\n\t\tmaersk_diplalocation as string,\n\t\tmaersk_diplalocationname as string,\n\t\tmaersk_dispatcherapmid as string,\n\t\tmaersk_disposeddateonfirmedbycustomer as timestamp,\n\t\tmaersk_dropnumber as string,\n\t\tmaersk_equipmentgroup as string,\n\t\tmaersk_estimatedstatusofdelivery as string,\n\t\tmaersk_evaccostaltpool as decimal(38,18),\n\t\tmaersk_evaccostpool as decimal(38,18),\n\t\tmaersk_expectedcontainersaleslocationid as string,\n\t\tmaersk_intermodalcontainerid as string,\n\t\tmaersk_lastmothervesselarrivaltime as timestamp,\n\t\tmaersk_lastraildestination as string,\n\t\tmaersk_lastraildestinationname as string,\n\t\tmaersk_move as string,\n\t\tmaersk_movelocationid as string,\n\t\tmaersk_movelocationidname as string,\n\t\tmaersk_movetimestamp as timestamp,\n\t\tmaersk_name as string,\n\t\tmaersk_portentrycountry as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_region as string,\n\t\tmaersk_returnclientaddress as string,\n\t\tmaersk_returnclientemail as string,\n\t\tmaersk_returnclientname as string,\n\t\tmaersk_standardcomment as string,\n\t\tmaersk_type as string,\n\t\tmaersk_weekloc as string,\n\t\tmaersk_wonumber as string,\n\t\tmodifiedby as string,\n\t\tmodifiedbyname as string,\n\t\tmodifiedbyyominame as string,\n\t\tmodifiedon as timestamp,\n\t\tmodifiedonbehalfby as string,\n\t\tmodifiedonbehalfbyname as string,\n\t\tmodifiedonbehalfbyyominame as string,\n\t\toverriddencreatedon as timestamp,\n\t\townerid as string,\n\t\towneridname as string,\n\t\towneridtype as string,\n\t\towneridyominame as string,\n\t\towningbusinessunit as string,\n\t\towningteam as string,\n\t\towninguser as string,\n\t\tstatecode as integer,\n\t\tstatuscode as integer,\n\t\ttimezoneruleversionnumber as integer,\n\t\tutcconversiontimezonecode as integer,\n\t\tversionnumber as long\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['intermodalpotentialcontainerstodeliver']) ~> dataversedata\nStagingBlobIntermodelPotentialContainerDataToDeliver derive(container_id = trim(toString(byName('container_id'))),\n\t\tallocation_date = toTimestamp(toString(byName('allocation_date'))),\n\t\tdipla_location_id = trim(toString(byName('dipla_location_id'))),\n\t\tdipla_location_name = trim(toString(byName('dipla_location_name'))),\n\t\tbooking_number = trim(toString(byName('booking_number'))),\n\t\tdrop_number = trim(toString(byName('drop_number'))),\n\t\tdestination_location_id = trim(toString(byName('destination_location_id'))),\n\t\tdestination_location_name = trim(toString(byName('destination_location_name'))),\n\t\tconsignee_name = trim(toString(byName('consignee_name'))),\n\t\tregion = trim(toString(byName('region'))),\n\t\tlast_rail_dest = trim(toString(byName('last_rail_dest'))),\n\t\treturn_client_name = trim(toString(byName('return_client_name'))),\n\t\treturn_client_address = trim(toString(byName('return_client_address'))),\n\t\treturn_client_email = trim(toString(byName('return_client_email'))),\n\t\tproduction_year = toInteger(byName('production_year')),\n\t\tequipment_group = trim(toString(byName('equipment_group'))),\n\t\tconsignee_scv_code = trim(toString(byName('consignee_scv_code'))),\n\t\ttype = trim(toString(byName('type'))),\n\t\tweek_loc = trim(toString(byName('week_loc'))),\n\t\tevac_cost_pool = toDouble(byName('evac_cost_pool')),\n\t\tevac_cost_alt_pool = toDouble(byName('evac_cost_alt_pool')),\n\t\tbreak_even_price_pool = toDouble(byName('break_even_price_pool')),\n\t\tbreak_even_price_alt_pool = toDouble(byName('break_even_price_alt_pool')),\n\t\taction = trim(toString(byName('action'))),\n\t\tstandard_comment = trim(toString(byName('standard_comment'))),\n\t\tcase_id = trim(toString(byName('case_id'))),\n\t\twork_order_number = trim(toString(byName('work_order_number'))),\n\t\tdisposed_date_confirmed_by_the_customer = toTimestamp(byName('disposed_date_confirmed_by_the_customer')),\n\t\tcountry_of_port_entry = trim(toString(byName('country_of_port_entry'))),\n\t\tDispatcher_APM_ID = trim(toString(byName('Dispatcher_APM_ID'))),\n\t\texpected_container_sales_location_id = trim(toString(byName('expected_container_sales_location_id'))),\n\t\tlast_mother_vessel_arrival_time = toTimestamp(byName('last_mother_vessel_arrival_time')),\n\t\testimated_status_of_delivery = trim(toString(byName('estimated_status_of_delivery'))),\n\t\tmove = trim(toString(byName('move'))),\n\t\tmove_timestamp = toTimestamp(byName('move_timestamp')),\n\t\tmove_location_id = trim(toString(byName('move_location_id')))) ~> DataTransformation\nDataTransformation, sitedatafromblob lookup(dipla_location_id == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupDiplaLocationId\nLookupDiplaLocationId select(mapColumn(\n\t\tcontainer_id,\n\t\tallocation_date,\n\t\tdipla_location_name,\n\t\tbooking_number,\n\t\tdrop_number,\n\t\tdestination_location_id,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tregion,\n\t\tlast_rail_dest,\n\t\treturn_client_name,\n\t\treturn_client_address,\n\t\treturn_client_email,\n\t\tproduction_year,\n\t\tequipment_group,\n\t\tconsignee_scv_code,\n\t\ttype,\n\t\tweek_loc,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\taction,\n\t\tstandard_comment,\n\t\tcase_id,\n\t\twork_order_number,\n\t\tdisposed_date_confirmed_by_the_customer,\n\t\tcountry_of_port_entry,\n\t\tDispatcher_APM_ID,\n\t\texpected_container_sales_location_id,\n\t\tlast_mother_vessel_arrival_time,\n\t\testimated_status_of_delivery,\n\t\tmove,\n\t\tmove_timestamp,\n\t\tmove_location_id,\n\t\tdipla_location_id = maersk_siteid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectDiplaLocation\nSelectDiplaLocation, sitedatafromblob lookup(last_rail_dest == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupLastRailDestination\nLookupLastRailDestination select(mapColumn(\n\t\tcontainer_id,\n\t\tallocation_date,\n\t\tdipla_location_name,\n\t\tbooking_number,\n\t\tdrop_number,\n\t\tdestination_location_id,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tregion,\n\t\treturn_client_name,\n\t\treturn_client_address,\n\t\treturn_client_email,\n\t\tproduction_year,\n\t\tequipment_group,\n\t\tconsignee_scv_code,\n\t\ttype,\n\t\tweek_loc,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\taction,\n\t\tstandard_comment,\n\t\tcase_id,\n\t\twork_order_number,\n\t\tdisposed_date_confirmed_by_the_customer,\n\t\tcountry_of_port_entry,\n\t\tDispatcher_APM_ID,\n\t\texpected_container_sales_location_id,\n\t\tlast_mother_vessel_arrival_time,\n\t\testimated_status_of_delivery,\n\t\tmove,\n\t\tmove_timestamp,\n\t\tmove_location_id,\n\t\tdipla_location_id,\n\t\tlast_rail_dest = maersk_siteid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectLastRailDestination\nSelectLastRailDestination, sitedatafromblob lookup(move_location_id == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupMoveLocationId\nLookupMoveLocationId select(mapColumn(\n\t\tcontainer_id,\n\t\tallocation_date,\n\t\tdipla_location_name,\n\t\tbooking_number,\n\t\tdrop_number,\n\t\tdestination_location_id,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tregion,\n\t\treturn_client_name,\n\t\treturn_client_address,\n\t\treturn_client_email,\n\t\tproduction_year,\n\t\tequipment_group,\n\t\tconsignee_scv_code,\n\t\ttype,\n\t\tweek_loc,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\taction,\n\t\tstandard_comment,\n\t\tcase_id,\n\t\twork_order_number,\n\t\tdisposed_date_confirmed_by_the_customer,\n\t\tcountry_of_port_entry,\n\t\tDispatcher_APM_ID,\n\t\texpected_container_sales_location_id,\n\t\tlast_mother_vessel_arrival_time,\n\t\testimated_status_of_delivery,\n\t\tmove,\n\t\tmove_timestamp,\n\t\tdipla_location_id,\n\t\tlast_rail_dest,\n\t\tmove_location_id = maersk_siteid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectMoveLocationId\nSelectMoveLocationId, countrydatafromblob lookup(country_of_port_entry == maersk_countrycode,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCountryOfPortEntry\nLookupCountryOfPortEntry select(mapColumn(\n\t\tcontainer_id,\n\t\tallocation_date,\n\t\tdipla_location_name,\n\t\tbooking_number,\n\t\tdrop_number,\n\t\tdestination_location_id,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tregion,\n\t\treturn_client_name,\n\t\treturn_client_address,\n\t\treturn_client_email,\n\t\tproduction_year,\n\t\tequipment_group,\n\t\tconsignee_scv_code,\n\t\ttype,\n\t\tweek_loc,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\taction,\n\t\tstandard_comment,\n\t\tcase_id,\n\t\twork_order_number,\n\t\tdisposed_date_confirmed_by_the_customer,\n\t\tDispatcher_APM_ID,\n\t\texpected_container_sales_location_id,\n\t\tlast_mother_vessel_arrival_time,\n\t\testimated_status_of_delivery,\n\t\tmove,\n\t\tmove_timestamp,\n\t\tdipla_location_id,\n\t\tlast_rail_dest,\n\t\tmove_location_id,\n\t\tcountry_of_port_entry = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCountryOfPortEntry\nSelectCountryOfPortEntry derive(checksum = sha1(columns())) ~> checksum\nchecksum, dataversedata join(container_id == maersk_name,\n\tjoinType:'left',\n\tbroadcast: 'auto')~> RelateTwoDatasets\nRelateTwoDatasets filter(case(maersk_datahash==checksum, false(), true())) ~> FilterOnlyNewRows\nFilterOnlyNewRows select(mapColumn(\n\t\tcontainer_id,\n\t\tallocation_date,\n\t\tdipla_location_name,\n\t\tbooking_number,\n\t\tdrop_number,\n\t\tdestination_location_id,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tregion,\n\t\treturn_client_name,\n\t\treturn_client_address,\n\t\treturn_client_email,\n\t\tproduction_year,\n\t\tequipment_group,\n\t\tconsignee_scv_code,\n\t\ttype,\n\t\tweek_loc,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\taction,\n\t\tstandard_comment,\n\t\tcase_id,\n\t\twork_order_number,\n\t\tdisposed_date_confirmed_by_the_customer,\n\t\tDispatcher_APM_ID,\n\t\texpected_container_sales_location_id,\n\t\tlast_mother_vessel_arrival_time,\n\t\testimated_status_of_delivery,\n\t\tmove,\n\t\tmove_timestamp,\n\t\tdipla_location_id,\n\t\tlast_rail_dest,\n\t\tmove_location_id,\n\t\tcountry_of_port_entry,\n\t\tchecksum\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumns\nSelectRequiredColumns sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobIntermodalpotentialcontainerstodeliver"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

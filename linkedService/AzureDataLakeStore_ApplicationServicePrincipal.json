@@ -1,0 +1,37 @@
+{
+	"name": "AzureDataLakeStore_ApplicationServicePrincipal",
+	"properties": {
+		"type": "AzureDataLakeStore",
+		"annotations": [],
+		"typeProperties": {
+			"dataLakeStoreUri": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "BoxViewDataLakeStoreUri"
+			},
+			"servicePrincipalId": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "boxviewapps-client-id"
+			},
+			"servicePrincipalKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "boxviewapps-client-secret"
+			},
+			"tenant": "05d75c05-fa1a-42e7-9cf1-eb416c396f2d",
+			"subscriptionId": "",
+			"resourceGroupName": ""
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}

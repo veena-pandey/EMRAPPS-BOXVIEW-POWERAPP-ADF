@@ -1,0 +1,148 @@
+{
+	"name": "Intermodal Potential Containers To Deliver ADLS_writeback Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "ADLS_writeback",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Export IntermodalPotential Data From Dataverse to Blob",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "Load_Intermodal_Potential_Container_Data_To_ADLS_writeback",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"CopytoADLS": {
+								"environment": {
+									"value": "@pipeline().globalParameters.EnvironmentType",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "Export IntermodalPotential Data From Dataverse to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Dataverse Exported Folder",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch >\n  <entity name=\"maersk_intermodalcontainer\">\n    <attribute name=\"maersk_intermodalcontainerid\" />\n<attribute name=\"maersk_name\" />\n<attribute name=\"maersk_allocationdate\" />\n<attribute name=\"maersk_cssdiplalocation\" />\n<attribute name=\"maersk_cssdiplalocationname\" />\n<attribute name=\"maersk_bookingnumber\" />\n<attribute name=\"maersk_dropnumber\" />\n<attribute name=\"maersk_destinationlocationid\" />\n<attribute name=\"maersk_destinationlocationname\" />\n<attribute name=\"maersk_consigneename\" />\n<attribute name=\"maersk_region\" />\n<attribute name=\"maersk_csslastraildestination\" />\n<attribute name=\"maersk_returnclientname\" />\n<attribute name=\"maersk_returnclientaddress\" />\n<attribute name=\"maersk_returnclientemail\" />\n<attribute name=\"maersk_productionyear\" />\n<attribute name=\"maersk_equipmentgroup\" />\n<attribute name=\"maersk_consigneescvcode\" />\n<attribute name=\"maersk_type\" />\n<attribute name=\"maersk_weekloc\" />\n<attribute name=\"maersk_evaccostpool\" />\n<attribute name=\"maersk_evaccostaltpool\" />\n<attribute name=\"maersk_breakevenpricepool\" />\n<attribute name=\"maersk_breakevenpricealtpool\" />\n<attribute name=\"maersk_action\" />\n<attribute name=\"maersk_standardcomment\" />\n<attribute name=\"maersk_caseid\" />\n<attribute name=\"maersk_wonumber\" />\n<attribute name=\"maersk_disposeddateonfirmedbycustomer\" />\n<attribute name=\"maersk_portentrycountry\" />\n<attribute name=\"maersk_dispatcherapmid\" />\n<attribute name=\"maersk_expectedcontainersaleslocationid\" />\n<attribute name=\"maersk_lastmothervesselarrivaltime\" />\n<attribute name=\"maersk_estimatedstatusofdelivery\" />\n<attribute name=\"maersk_move\" />\n<attribute name=\"maersk_movetimestamp\" />\n<attribute name=\"maersk_cssmovelocationid\" />\n    <filter type=\"and\">\n      <condition attribute=\"statecode\" operator=\"eq\" value=\"0\" />\n    </filter>\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings",
+							"maxRowsPerFile": 100000
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Intermodal_Container",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_intermodalpotentialcontainerstodeliver_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Delete Dataverse Exported Folder",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_intermodalpotentialcontainerstodeliver_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"variables": {
+			"environment": {
+				"type": "String",
+				"defaultValue": "datalake-dev"
+			},
+			"datafolderpath": {
+				"type": "String",
+				"defaultValue": "/ontology/foundry/models/boxview_apps/intermodal_potential_containers_to_deliver/data"
+			},
+			"sourcefolderpath": {
+				"type": "String"
+			},
+			"currentfolderpath": {
+				"type": "String"
+			},
+			"maxlastmodified": {
+				"type": "String"
+			},
+			"finaldatafolderpath": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "CSS"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-05-17T05:13:27Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

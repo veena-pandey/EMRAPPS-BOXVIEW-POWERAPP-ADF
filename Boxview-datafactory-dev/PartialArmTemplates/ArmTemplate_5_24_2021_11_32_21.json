@@ -1,0 +1,528 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/PMT_Price_Table_ADX')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "PMTPriceTable Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Data",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "price_table_pre_price_mgmt_tool",
+								"queryTimeout": "00:10:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "country_cd",
+											"type": "String"
+										},
+										"sink": {
+											"name": "country_cd",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "site_code",
+											"type": "String"
+										},
+										"sink": {
+											"name": "site_code",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "price_category",
+											"type": "String"
+										},
+										"sink": {
+											"name": "price_category",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "price",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "price",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "price_compare_at",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "price_compare_at",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "minimum_price_sales_manager",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "minimum_price_sales_manager",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "minimum_price_regional_manager",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "minimum_price_regional_manager",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "minimum_price_hq",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "minimum_price_hq",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "surcharge_value",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "surcharge_value",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "key_from_inventory",
+											"type": "String"
+										},
+										"sink": {
+											"name": "key_from_inventory",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "edited_at_level",
+											"type": "String"
+										},
+										"sink": {
+											"name": "edited_at_level",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "edited_timestamp",
+											"type": "String"
+										},
+										"sink": {
+											"name": "edited_timestamp",
+											"type": "Int64",
+											"physicalType": "bigint"
+										}
+									},
+									{
+										"source": {
+											"name": "edited_by",
+											"type": "String"
+										},
+										"sink": {
+											"name": "edited_by",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "pool_id",
+											"type": "String"
+										},
+										"sink": {
+											"name": "pool_id",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "site",
+											"type": "String"
+										},
+										"sink": {
+											"name": "site",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "allowed_for_sale",
+											"type": "String"
+										},
+										"sink": {
+											"name": "allowed_for_sale",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "area",
+											"type": "String"
+										},
+										"sink": {
+											"name": "area",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "team_name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "team_name",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "country_dsc",
+											"type": "String"
+										},
+										"sink": {
+											"name": "country_dsc",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "regional_manager_dry",
+											"type": "String"
+										},
+										"sink": {
+											"name": "regional_manager_dry",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "regional_manager_reefer",
+											"type": "String"
+										},
+										"sink": {
+											"name": "regional_manager_reefer",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_dry",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_manager_dry",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_reefer",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_manager_reefer",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_operations",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_operations",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "customer_service",
+											"type": "String"
+										},
+										"sink": {
+											"name": "customer_service",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_backup",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_manager_backup",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_Pricetable",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Blob_PMT_Pricedata_Stage",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy to sql stage",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "PMTPriceTable Data From ADX To Staging Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "PMT_price_table_adx",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "sp_mergedata",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Copy to sql stage",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[PMT_PriceTable_Mergedata]"
+						},
+						"linkedServiceName": {
+							"referenceName": "boxview_asql",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Delete Staging Data",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "Blob_PMT_Pricedata_Stage",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"folder": {
+					"name": "SQL-Sync"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-17T04:59:52Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load Site Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSP"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_site_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobSite"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_country_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "countrydatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_pool_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "pooldatafromblob"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobSite",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "LookupCountry"
+						},
+						{
+							"name": "SelectCountry"
+						},
+						{
+							"name": "LookupPool"
+						},
+						{
+							"name": "SelectPool"
+						}
+					],
+					"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp']) ~> StagingBlobSite\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_countrycode as string,\n\t\tmaersk_countryid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['country/*.parquet']) ~> countrydatafromblob\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_poolid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['pool/*.parquet']) ~> pooldatafromblob\nStagingBlobSite derive(loc_cd = trim(toString(byName('loc_cd'))),\n\t\tsite_type = trim(toString(byName('site_type'))),\n\t\tloc_dsc = trim(toString(byName('loc_dsc'))),\n\t\tcountry_cd = trim(toString(byName('country_cd'))),\n\t\tcountry_dsc = trim(toString(byName('country_dsc'))),\n\t\tcity_cd = trim(toString(byName('city_cd'))),\n\t\tcity_dsc = trim(toString(byName('city_dsc'))),\n\t\tcluster_cd = trim(toString(byName('cluster_cd'))),\n\t\tcluster_dsc = trim(toString(byName('cluster_dsc'))),\n\t\tregion_cd = trim(toString(byName('region_cd'))),\n\t\tregion_dsc = trim(toString(byName('region_dsc'))),\n\t\tpool_cd = trim(toString(byName('pool_cd'))),\n\t\tpool_dsc = trim(toString(byName('pool_dsc'))),\n\t\tlopsc_cd = trim(toString(byName('lopsc_cd'))),\n\t\tlopsc_dsc = trim(toString(byName('lopsc_dsc'))),\n\t\tlat = trim(toString(byName('lat'))),\n\t\tlon = trim(toString(byName('lon'))),\n\t\temail_address = trim(toString(byName('email_address'))),\n\t\tphone = trim(toString(byName('phone'))),\n\t\tcontact_person = trim(toString(byName('contact_person'))),\n\t\taddress_1 = trim(toString(byName('address_1'))),\n\t\taddress_2 = trim(toString(byName('address_2'))),\n\t\taddress_3 = trim(toString(byName('address_3'))),\n\t\tpostal_code = trim(toString(byName('postal_code'))),\n\t\tcity_name = trim(toString(byName('city_name'))),\n\t\tlocal_tax = trim(toString(byName('local_tax'))),\n\t\tglobal_tax = trim(toString(byName('global_tax'))),\n\t\teu_tax = trim(toString(byName('eu_tax'))),\n\t\tstate_province_name = trim(toString(byName('state_province_name'))),\n\t\tsales_manager_dry = trim(toString(byName('sales_manager_dry'))),\n\t\tsales_manager_reefer = trim(toString(byName('sales_manager_reefer'))),\n\t\tcustomer_service = trim(toString(byName('customer_service'))),\n\t\tsales_operations = trim(toString(byName('sales_operations')))) ~> DataTransformation\nDataTransformation, countrydatafromblob lookup(upper(country_dsc) == upper(maersk_name),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCountry\nLookupCountry select(mapColumn(\n\t\tloc_cd,\n\t\tsite_type,\n\t\tloc_dsc,\n\t\tcountry_cd,\n\t\tcity_cd,\n\t\tcity_dsc,\n\t\tcluster_cd,\n\t\tcluster_dsc,\n\t\tregion_cd,\n\t\tregion_dsc,\n\t\tpool_cd,\n\t\tpool_dsc,\n\t\tlopsc_cd,\n\t\tlopsc_dsc,\n\t\tlat,\n\t\tlon,\n\t\tcity_name,\n\t\tstate_province_name,\n\t\tcountry_dsc = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCountry\nSelectCountry, pooldatafromblob lookup(upper(pool_dsc) == upper(maersk_name),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupPool\nLookupPool select(mapColumn(\n\t\tloc_cd,\n\t\tsite_type,\n\t\tloc_dsc,\n\t\tlat,\n\t\tlon,\n\t\tcountry_dsc,\n\t\tpool_dsc = maersk_poolid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectPool\nSelectPool sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobSite"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

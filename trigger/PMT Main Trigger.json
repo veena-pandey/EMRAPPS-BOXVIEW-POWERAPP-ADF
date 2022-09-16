@@ -1,0 +1,24 @@
+{
+	"name": "PMT Main Trigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "PMT_PriceTable_Master",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Hour",
+				"interval": 1,
+				"startTime": "2021-05-27T23:00:00Z",
+				"timeZone": "UTC"
+			}
+		}
+	}
+}

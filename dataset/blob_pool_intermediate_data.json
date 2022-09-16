@@ -1,0 +1,23 @@
+{
+	"name": "blob_pool_intermediate_data",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "CSP BLOB/Intermediate"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "pool",
+				"container": "intermediatedata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

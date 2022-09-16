@@ -1,0 +1,442 @@
+{
+	"name": "PMT_Price_Table_ADX",
+	"properties": {
+		"activities": [
+			{
+				"name": "PMTPriceTable Data From ADX To Staging Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Staging Data",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureDataExplorerSource",
+						"query": "price_table_pre_price_mgmt_tool",
+						"queryTimeout": "00:10:00",
+						"noTruncation": true
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "country_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "country_cd",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "site_code",
+									"type": "String"
+								},
+								"sink": {
+									"name": "site_code",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "price_category",
+									"type": "String"
+								},
+								"sink": {
+									"name": "price_category",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "price",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "price",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "price_compare_at",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "price_compare_at",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "minimum_price_sales_manager",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "minimum_price_sales_manager",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "minimum_price_regional_manager",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "minimum_price_regional_manager",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "minimum_price_hq",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "minimum_price_hq",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "surcharge_value",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "surcharge_value",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "key_from_inventory",
+									"type": "String"
+								},
+								"sink": {
+									"name": "key_from_inventory",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "edited_at_level",
+									"type": "String"
+								},
+								"sink": {
+									"name": "edited_at_level",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "edited_timestamp",
+									"type": "String"
+								},
+								"sink": {
+									"name": "edited_timestamp",
+									"type": "Int64",
+									"physicalType": "bigint"
+								}
+							},
+							{
+								"source": {
+									"name": "edited_by",
+									"type": "String"
+								},
+								"sink": {
+									"name": "edited_by",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "pool_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pool_id",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "site",
+									"type": "String"
+								},
+								"sink": {
+									"name": "site",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "allowed_for_sale",
+									"type": "String"
+								},
+								"sink": {
+									"name": "allowed_for_sale",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "area",
+									"type": "String"
+								},
+								"sink": {
+									"name": "area",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "team_name",
+									"type": "String"
+								},
+								"sink": {
+									"name": "team_name",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "country_dsc",
+									"type": "String"
+								},
+								"sink": {
+									"name": "country_dsc",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "regional_manager_dry",
+									"type": "String"
+								},
+								"sink": {
+									"name": "regional_manager_dry",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "regional_manager_reefer",
+									"type": "String"
+								},
+								"sink": {
+									"name": "regional_manager_reefer",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_manager_dry",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sales_manager_dry",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_manager_reefer",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sales_manager_reefer",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_operations",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sales_operations",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "customer_service",
+									"type": "String"
+								},
+								"sink": {
+									"name": "customer_service",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_manager_backup",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sales_manager_backup",
+									"type": "String",
+									"physicalType": "varchar"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AzureDataExplorer_Pricetable",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Blob_PMT_Pricedata_Stage",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy to sql stage",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "PMTPriceTable Data From ADX To Staging Blob",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "PMT_price_table_adx",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "sp_mergedata",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy to sql stage",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[PMT_PriceTable_Mergedata]"
+				},
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Delete Staging Data",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "Blob_PMT_Pricedata_Stage",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "SQL-Sync"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-05-17T04:59:52Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

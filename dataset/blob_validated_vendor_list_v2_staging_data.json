@@ -1,0 +1,48 @@
+{
+	"name": "blob_validated_vendor_list_v2_staging_data",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "CSP BLOB/Staging"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "validated_vendor_list_v2",
+				"container": "stagingdata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "name",
+				"type": "UTF8"
+			},
+			{
+				"name": "email",
+				"type": "UTF8"
+			},
+			{
+				"name": "webshop_role",
+				"type": "UTF8"
+			},
+			{
+				"name": "maestro_role",
+				"type": "UTF8"
+			},
+			{
+				"name": "cell_phone",
+				"type": "UTF8"
+			},
+			{
+				"name": "work_phone",
+				"type": "UTF8"
+			}
+		]
+	}
+}

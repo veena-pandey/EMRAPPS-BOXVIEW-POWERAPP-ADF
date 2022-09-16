@@ -1,0 +1,380 @@
+{
+	"name": "Site Dataverse Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Data transformation flow",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Copy Site Data From ADX To Staging Blob",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "Load Site Data To Blob",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "Delete Exported folder from blob",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "Copy Site data to Dataverse",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_site_csp_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Copy Site data to Dataverse",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Data transformation flow",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "sitecsp",
+							"wildcardFileName": "*.parquet",
+							"enablePartitionDiscovery": false
+						}
+					},
+					"sink": {
+						"type": "DynamicsSink",
+						"writeBatchSize": 10,
+						"writeBehavior": "upsert",
+						"ignoreNullValues": false,
+						"alternateKeyName": "maersk_sitenamekey"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "loc_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_sitecode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "loc_dsc",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_sitedescription"
+								}
+							},
+							{
+								"source": {
+									"name": "lat",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_latitude",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "lon",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_longitude",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "country_dsc",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_country",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "pool_dsc",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_pool",
+									"type": "Guid"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_city"
+								},
+								"sink": {
+									"name": "maersk_city"
+								}
+							},
+							{
+								"source": {
+									"name": "site_code"
+								},
+								"sink": {
+									"name": "maersk_name"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "blob_site_csp_intermediate_data",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "boxview_Site_CSP",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Site CSP data to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Exported folder from blob",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"maersk_site\" >\n    <attribute name=\"maersk_poolname\" />\n    <attribute name=\"maersk_sitecode\" />\n    <attribute name=\"maersk_country\" />\n    <attribute name=\"maersk_city\" />\n    <attribute name=\"maersk_siteid\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_countryname\" />\n    <attribute name=\"maersk_pool\" />\n    <attribute name=\"maersk_cityname\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Site_CSP",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_site_csp_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Delete Staging Data folder from blob",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_site_staging_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Copy Site Data From ADX To Staging Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Staging Data folder from blob",
+						"dependencyConditions": [
+							"Completed"
+						]
+					},
+					{
+						"activity": "Delete Intermediate Folder",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureDataExplorerSource",
+						"query": "site",
+						"queryTimeout": "00:10:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AzureDataExplorer_Site",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_site_staging_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Delete Intermediate Folder",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_site_csp_intermediate_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "CSP"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-05-03T13:56:25Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

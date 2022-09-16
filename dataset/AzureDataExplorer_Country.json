@@ -1,0 +1,19 @@
+{
+	"name": "AzureDataExplorer_Country",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataExplorer_BoxView",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ADX"
+		},
+		"annotations": [],
+		"type": "AzureDataExplorerTable",
+		"schema": [],
+		"typeProperties": {
+			"table": "country"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

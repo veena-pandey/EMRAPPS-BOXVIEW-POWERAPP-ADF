@@ -1,0 +1,132 @@
+{
+	"name": "boxview_etl_pmt_price_table_Stage",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "boxview_asql",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ASQL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "country_cd",
+				"type": "varchar"
+			},
+			{
+				"name": "site_code",
+				"type": "varchar"
+			},
+			{
+				"name": "price_category",
+				"type": "varchar"
+			},
+			{
+				"name": "price",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "price_compare_at",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "minimum_price_sales_manager",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "minimum_price_regional_manager",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "minimum_price_hq",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "surcharge_value",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "key_from_inventory",
+				"type": "varchar"
+			},
+			{
+				"name": "edited_at_level",
+				"type": "varchar"
+			},
+			{
+				"name": "edited_timestamp",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "edited_by",
+				"type": "varchar"
+			},
+			{
+				"name": "pool_id",
+				"type": "varchar"
+			},
+			{
+				"name": "site",
+				"type": "varchar"
+			},
+			{
+				"name": "allowed_for_sale",
+				"type": "varchar"
+			},
+			{
+				"name": "area",
+				"type": "varchar"
+			},
+			{
+				"name": "team_name",
+				"type": "varchar"
+			},
+			{
+				"name": "country_dsc",
+				"type": "varchar"
+			},
+			{
+				"name": "regional_manager_dry",
+				"type": "varchar"
+			},
+			{
+				"name": "regional_manager_reefer",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_manager_dry",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_manager_reefer",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_operations",
+				"type": "varchar"
+			},
+			{
+				"name": "customer_service",
+				"type": "varchar"
+			},
+			{
+				"name": "sales_manager_backup",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "PMT_PriceTable_Stage"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

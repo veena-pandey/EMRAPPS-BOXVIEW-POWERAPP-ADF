@@ -1,0 +1,36 @@
+{
+	"name": "Load Contact Data To Blob",
+	"properties": {
+		"folder": {
+			"name": "CSP"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "blob_contact_staging_data",
+						"type": "DatasetReference"
+					},
+					"name": "StagingBlobContact"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "blob_contact_intermediate_data",
+						"type": "DatasetReference"
+					},
+					"name": "IntermediateBlobContact",
+					"description": "Export data to blob_customer_data"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DataTransformationContact"
+				}
+			],
+			"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['contact']) ~> StagingBlobContact\nStagingBlobContact derive(name = trim(toString(byName('name'))),\n\t\temail = trim(toString(byName('email'))),\n\t\twebshop_role = trim(toString(byName('webshop_role'))),\n\t\tmaestro_role = trim(toString(byName('maestro_role'))),\n\t\tcell_phone = trim(toString(byName('cell_phone'))),\n\t\twork_phone = trim(toString(byName('work_phone')))) ~> DataTransformationContact\nDataTransformationContact sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobContact"
+		}
+	}
+}

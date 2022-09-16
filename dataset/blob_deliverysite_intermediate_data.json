@@ -1,0 +1,23 @@
+{
+	"name": "blob_deliverysite_intermediate_data",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "CSP BLOB/Intermediate"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "delivery_sites",
+				"container": "intermediatedata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

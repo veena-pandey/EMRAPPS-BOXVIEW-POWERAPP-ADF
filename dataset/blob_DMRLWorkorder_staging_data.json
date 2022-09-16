@@ -1,0 +1,149 @@
+{
+	"name": "blob_DMRLWorkorder_staging_data",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "DMRL/Staging"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "dmrlworkorder",
+				"container": "stagingdata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "work_order_id",
+				"type": "UTF8"
+			},
+			{
+				"name": "container_id",
+				"type": "UTF8"
+			},
+			{
+				"name": "is_sales",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "is_surplus",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "equipment_size",
+				"type": "UTF8"
+			},
+			{
+				"name": "location_id",
+				"type": "UTF8"
+			},
+			{
+				"name": "last_move_timestamp",
+				"type": "INT96"
+			},
+			{
+				"name": "is_empty",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "last_move",
+				"type": "UTF8"
+			},
+			{
+				"name": "equipment_redelivery_status",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "adjusted_MRL",
+				"type": "DECIMAL",
+				"precision": 38,
+				"scale": 18
+			},
+			{
+				"name": "adjusted_MRL_box",
+				"type": "DECIMAL",
+				"precision": 38,
+				"scale": 18
+			},
+			{
+				"name": "total_cost_with_maersk_parts_usd",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "total_price_not_covered_by_warranty",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "total_cost_under_warranty",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "expiry_date",
+				"type": "UTF8"
+			},
+			{
+				"name": "should_repair",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "reasoning_for_rejection",
+				"type": "UTF8"
+			},
+			{
+				"name": "work_order_created_date",
+				"type": "INT96"
+			},
+			{
+				"name": "urgent",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "shop_id",
+				"type": "UTF8"
+			},
+			{
+				"name": "cluster_id",
+				"type": "UTF8"
+			},
+			{
+				"name": "wolocation_id",
+				"type": "UTF8"
+			},
+			{
+				"name": "total_cost_usd",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "status_description",
+				"type": "UTF8"
+			},
+			{
+				"name": "work_order_id1",
+				"type": "UTF8"
+			},
+			{
+				"name": "would_repair_after_change",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "would_repair_before_change",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "approved_by",
+				"type": "UTF8"
+			},
+			{
+				"name": "over_mrl",
+				"type": "BOOLEAN"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

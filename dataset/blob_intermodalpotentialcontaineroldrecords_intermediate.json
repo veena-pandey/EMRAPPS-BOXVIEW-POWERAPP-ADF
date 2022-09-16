@@ -1,0 +1,23 @@
+{
+	"name": "blob_intermodalpotentialcontaineroldrecords_intermediate",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "CSS BLOB/Intermediate"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "intermodalpotentialcontainerOldRecords",
+				"container": "intermediatedata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

@@ -1,0 +1,137 @@
+{
+	"name": "boxview_etl_dmrl_workorder",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "boxview_asql",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ASQL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "WorkorderId",
+				"type": "uniqueidentifier"
+			},
+			{
+				"name": "container_id",
+				"type": "uniqueidentifier"
+			},
+			{
+				"name": "work_order_id",
+				"type": "varchar"
+			},
+			{
+				"name": "checksum",
+				"type": "varchar"
+			},
+			{
+				"name": "is_sales",
+				"type": "bit"
+			},
+			{
+				"name": "is_surplus",
+				"type": "bit"
+			},
+			{
+				"name": "equipment_size",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "last_move_timestamp",
+				"type": "datetimeoffset",
+				"scale": 7
+			},
+			{
+				"name": "is_empty",
+				"type": "bit"
+			},
+			{
+				"name": "last_move",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "equipment_redelivery_status",
+				"type": "bit"
+			},
+			{
+				"name": "adjusted_MRL",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "adjusted_MRL_box",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "total_cost_with_maersk_parts_usd",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "total_price_not_covered_by_warranty",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "total_cost_under_warranty",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "expiry_date",
+				"type": "datetimeoffset",
+				"scale": 7
+			},
+			{
+				"name": "should_repair",
+				"type": "bit"
+			},
+			{
+				"name": "reasoning_for_rejection",
+				"type": "varchar"
+			},
+			{
+				"name": "urgent",
+				"type": "bit"
+			},
+			{
+				"name": "shop_id",
+				"type": "varchar"
+			},
+			{
+				"name": "cluster_id",
+				"type": "varchar"
+			},
+			{
+				"name": "wolocation_id",
+				"type": "varchar"
+			},
+			{
+				"name": "total_cost_usd",
+				"type": "decimal",
+				"precision": 2,
+				"scale": 0
+			},
+			{
+				"name": "status_description",
+				"type": "varchar"
+			},
+			{
+				"name": "work_order_created_date",
+				"type": "datetimeoffset",
+				"scale": 7
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "DMRL_Workorder"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

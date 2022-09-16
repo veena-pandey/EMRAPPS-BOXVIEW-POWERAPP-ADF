@@ -1,0 +1,44 @@
+{
+	"name": "PMT_PriceTable_Master",
+	"properties": {
+		"activities": [
+			{
+				"name": "PMT_Price_Table_ADX",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PMT_Price_Table_ADX",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PMT Price Table WriteBack_ADLS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PMT_Price_Table_ADX",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PMT Price Table WriteBack_ADLS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "SQL-Sync"
+		},
+		"annotations": []
+	}
+}

@@ -1,0 +1,19 @@
+{
+	"name": "AzureDataExplorer_DMRLWorkorder",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataExplorer_BoxView",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ADX"
+		},
+		"annotations": [],
+		"type": "AzureDataExplorerTable",
+		"schema": [],
+		"typeProperties": {
+			"table": "work_orders_with_repair_limits"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

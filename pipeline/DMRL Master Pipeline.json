@@ -1,0 +1,62 @@
+{
+	"name": "DMRL Master Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "DMRL Containers",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "DMRL Container dataverse Pipeline",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"ForceFullDatasetRefresh": {
+							"value": "@pipeline().parameters.ForceDatasetRefresh",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "DMRL SQL Workorders",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "DMRL Containers",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "DMRL Workorder SQL Pipeline",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"ForceFullDatasetRefresh": {
+							"value": "@pipeline().parameters.ForceDatasetRefresh",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"ForceDatasetRefresh": {
+				"type": "bool",
+				"defaultValue": false
+			}
+		},
+		"folder": {
+			"name": "DMRL"
+		},
+		"annotations": []
+	}
+}

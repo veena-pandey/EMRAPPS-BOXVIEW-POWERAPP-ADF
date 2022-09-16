@@ -1,0 +1,98 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Load_Intermodal_Potential_Container_Data_To_ADLS_writeback')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSS"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_country_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "countrydatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "sitedatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_intermodalpotentialcontainerstodeliver_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "DataverseData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "Datalake_Intermodal_Potential_Containers_To_Deliver_ADLS_writeback",
+								"type": "DatasetReference"
+							},
+							"name": "CopytoADLS",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "SelectRequiredColumns"
+						},
+						{
+							"name": "LookupLastRailDestination"
+						},
+						{
+							"name": "SelectLastRailDestination"
+						},
+						{
+							"name": "LookupMoveLocationId"
+						},
+						{
+							"name": "SelectMoveLocationId"
+						},
+						{
+							"name": "LookupCountryOfPortEntry"
+						},
+						{
+							"name": "SelectCountryOfPortEntry"
+						},
+						{
+							"name": "LookupDiplaLocation"
+						},
+						{
+							"name": "SelectDiplaLocation"
+						},
+						{
+							"name": "DerivedColumn1"
+						}
+					],
+					"script": "source(output(\n\t\tmaersk_name as string,\n\t\tmaersk_countrycode as string,\n\t\tmaersk_countryid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['country/*.parquet']) ~> countrydatafromblob\nsource(output(\n\t\tmaersk_siteid as string,\n\t\tmaersk_name as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> sitedatafromblob\nsource(output(\n\t\tcreatedby as string,\n\t\tcreatedbyname as string,\n\t\tcreatedbyyominame as string,\n\t\tcreatedon as timestamp,\n\t\tcreatedonbehalfby as string,\n\t\tcreatedonbehalfbyname as string,\n\t\tcreatedonbehalfbyyominame as string,\n\t\timportsequencenumber as integer,\n\t\tmaersk_action as string,\n\t\tmaersk_allocationdate as timestamp,\n\t\tmaersk_bookingnumber as string,\n\t\tmaersk_breakevenpricealtpool as decimal(38,18),\n\t\tmaersk_breakevenpricepool as decimal(38,18),\n\t\tmaersk_caseid as string,\n\t\tmaersk_consigneename as string,\n\t\tmaersk_consigneescvcode as string,\n\t\tmaersk_countryofportentry as string,\n\t\tmaersk_countryofportentryname as string,\n\t\tmaersk_datahash as string,\n\t\tmaersk_destinationlocationid as string,\n\t\tmaersk_destinationlocationname as string,\n\t\tmaersk_diplalocation as string,\n\t\tmaersk_diplalocationname as string,\n\t\tmaersk_dispatcherapmid as string,\n\t\tmaersk_disposeddateonfirmedbycustomer as timestamp,\n\t\tmaersk_dropnumber as string,\n\t\tmaersk_equipmentgroup as string,\n\t\tmaersk_estimatedstatusofdelivery as string,\n\t\tmaersk_evaccostaltpool as decimal(38,18),\n\t\tmaersk_evaccostpool as decimal(38,18),\n\t\tmaersk_expectedcontainersaleslocationid as string,\n\t\tmaersk_intermodalcontainerid as string,\n\t\tmaersk_lastmothervesselarrivaltime as timestamp,\n\t\tmaersk_lastraildestination as string,\n\t\tmaersk_lastraildestinationname as string,\n\t\tmaersk_move as string,\n\t\tmaersk_movelocationid as string,\n\t\tmaersk_movelocationidname as string,\n\t\tmaersk_movetimestamp as timestamp,\n\t\tmaersk_name as string,\n\t\tmaersk_portentrycountry as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_region as string,\n\t\tmaersk_returnclientaddress as string,\n\t\tmaersk_returnclientemail as string,\n\t\tmaersk_returnclientname as string,\n\t\tmaersk_standardcomment as string,\n\t\tmaersk_type as string,\n\t\tmaersk_weekloc as string,\n\t\tmaersk_wonumber as string,\n\t\tmodifiedby as string,\n\t\tmodifiedbyname as string,\n\t\tmodifiedbyyominame as string,\n\t\tmodifiedon as timestamp,\n\t\tmodifiedonbehalfby as string,\n\t\tmodifiedonbehalfbyname as string,\n\t\tmodifiedonbehalfbyyominame as string,\n\t\toverriddencreatedon as timestamp,\n\t\townerid as string,\n\t\towneridname as string,\n\t\towneridtype as string,\n\t\towneridyominame as string,\n\t\towningbusinessunit as string,\n\t\towningteam as string,\n\t\towninguser as string,\n\t\tstatecode as integer,\n\t\tstatuscode as integer,\n\t\ttimezoneruleversionnumber as integer,\n\t\tutcconversiontimezonecode as integer,\n\t\tversionnumber as long\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['intermodalpotentialcontainerstodeliver']) ~> DataverseData\nDataverseData select(mapColumn(\n\t\tcontainer_id = maersk_name,\n\t\tallocation_date = maersk_allocationdate,\n\t\tdipla_location_id = maersk_diplalocation,\n\t\tdipla_location_name = maersk_diplalocationname,\n\t\tbooking_number = maersk_bookingnumber,\n\t\tdrop_number = maersk_dropnumber,\n\t\tdestination_location_id = maersk_destinationlocationid,\n\t\tdestination_location_name = maersk_destinationlocationname,\n\t\tconsignee_name = maersk_consigneename,\n\t\tregion = maersk_region,\n\t\tlast_rail_dest = maersk_lastraildestination,\n\t\treturn_client_name = maersk_returnclientname,\n\t\treturn_client_address = maersk_returnclientaddress,\n\t\treturn_client_email = maersk_returnclientemail,\n\t\tproduction_year = maersk_productionyear,\n\t\tequipment_group = maersk_equipmentgroup,\n\t\tconsignee_scv_code = maersk_consigneescvcode,\n\t\ttype = maersk_type,\n\t\tweek_loc = maersk_weekloc,\n\t\tevac_cost_pool = maersk_evaccostpool,\n\t\tevac_cost_alt_pool = maersk_evaccostaltpool,\n\t\tbreak_even_price_pool = maersk_breakevenpricepool,\n\t\tbreak_even_price_alt_pool = maersk_breakevenpricealtpool,\n\t\taction = maersk_action,\n\t\tstandard_comment = maersk_standardcomment,\n\t\tcase_id = maersk_caseid,\n\t\twork_order_number = maersk_wonumber,\n\t\tdisposed_date_confirmed_by_the_customer = maersk_disposeddateonfirmedbycustomer,\n\t\tcountry_of_port_entry = maersk_countryofportentry,\n\t\tDispatcher_APM_ID = maersk_dispatcherapmid,\n\t\texpected_container_sales_location_id = maersk_expectedcontainersaleslocationid,\n\t\tlast_mother_vessel_arrival_time = maersk_lastmothervesselarrivaltime,\n\t\testimated_status_of_delivery = maersk_estimatedstatusofdelivery,\n\t\tmove = maersk_move,\n\t\tmove_timestamp = maersk_movetimestamp,\n\t\tmove_location_id = maersk_movelocationid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumns\nSelectDiplaLocation, sitedatafromblob lookup(last_rail_dest == maersk_siteid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupLastRailDestination\nLookupLastRailDestination select(mapColumn(\n\t\tcontainer_id,\n\t\tallocation_date,\n\t\tdipla_location_id,\n\t\tdipla_location_name,\n\t\tbooking_number,\n\t\tdrop_number,\n\t\tdestination_location_id,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tregion,\n\t\tlast_rail_dest = maersk_name,\n\t\treturn_client_name,\n\t\treturn_client_address,\n\t\treturn_client_email,\n\t\tproduction_year,\n\t\tequipment_group,\n\t\tconsignee_scv_code,\n\t\ttype,\n\t\tweek_loc,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\taction,\n\t\tstandard_comment,\n\t\tcase_id,\n\t\twork_order_number,\n\t\tdisposed_date_confirmed_by_the_customer,\n\t\tcountry_of_port_entry,\n\t\tDispatcher_APM_ID,\n\t\texpected_container_sales_location_id,\n\t\tlast_mother_vessel_arrival_time,\n\t\testimated_status_of_delivery,\n\t\tmove,\n\t\tmove_timestamp,\n\t\tmove_location_id\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectLastRailDestination\nSelectLastRailDestination, sitedatafromblob lookup(move_location_id == maersk_siteid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupMoveLocationId\nLookupMoveLocationId select(mapColumn(\n\t\tcontainer_id,\n\t\tallocation_date,\n\t\tdipla_location_id,\n\t\tdipla_location_name,\n\t\tbooking_number,\n\t\tdrop_number,\n\t\tdestination_location_id,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tregion,\n\t\tlast_rail_dest,\n\t\treturn_client_name,\n\t\treturn_client_address,\n\t\treturn_client_email,\n\t\tproduction_year,\n\t\tequipment_group,\n\t\tconsignee_scv_code,\n\t\ttype,\n\t\tweek_loc,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\taction,\n\t\tstandard_comment,\n\t\tcase_id,\n\t\twork_order_number,\n\t\tdisposed_date_confirmed_by_the_customer,\n\t\tcountry_of_port_entry,\n\t\tDispatcher_APM_ID,\n\t\texpected_container_sales_location_id,\n\t\tlast_mother_vessel_arrival_time,\n\t\testimated_status_of_delivery,\n\t\tmove,\n\t\tmove_timestamp,\n\t\tmove_location_id = maersk_name\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectMoveLocationId\nSelectMoveLocationId, countrydatafromblob lookup(country_of_port_entry == maersk_countryid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCountryOfPortEntry\nLookupCountryOfPortEntry select(mapColumn(\n\t\tcontainer_id,\n\t\tallocation_date,\n\t\tdipla_location_id,\n\t\tdipla_location_name,\n\t\tbooking_number,\n\t\tdrop_number,\n\t\tdestination_location_id,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tregion,\n\t\tlast_rail_dest,\n\t\treturn_client_name,\n\t\treturn_client_address,\n\t\treturn_client_email,\n\t\tproduction_year,\n\t\tequipment_group,\n\t\tconsignee_scv_code,\n\t\ttype,\n\t\tweek_loc,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\taction,\n\t\tstandard_comment,\n\t\tcase_id,\n\t\twork_order_number,\n\t\tdisposed_date_confirmed_by_the_customer,\n\t\tcountry_of_port_entry = maersk_countrycode,\n\t\tDispatcher_APM_ID,\n\t\texpected_container_sales_location_id,\n\t\tlast_mother_vessel_arrival_time,\n\t\testimated_status_of_delivery,\n\t\tmove,\n\t\tmove_timestamp,\n\t\tmove_location_id\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCountryOfPortEntry\nSelectRequiredColumns, sitedatafromblob lookup(dipla_location_id == maersk_siteid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupDiplaLocation\nLookupDiplaLocation select(mapColumn(\n\t\tcontainer_id,\n\t\tallocation_date,\n\t\tdipla_location_id = maersk_name,\n\t\tdipla_location_name,\n\t\tbooking_number,\n\t\tdrop_number,\n\t\tdestination_location_id,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tregion,\n\t\tlast_rail_dest,\n\t\treturn_client_name,\n\t\treturn_client_address,\n\t\treturn_client_email,\n\t\tproduction_year,\n\t\tequipment_group,\n\t\tconsignee_scv_code,\n\t\ttype,\n\t\tweek_loc,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\taction,\n\t\tstandard_comment,\n\t\tcase_id,\n\t\twork_order_number,\n\t\tdisposed_date_confirmed_by_the_customer,\n\t\tcountry_of_port_entry,\n\t\tDispatcher_APM_ID,\n\t\texpected_container_sales_location_id,\n\t\tlast_mother_vessel_arrival_time,\n\t\testimated_status_of_delivery,\n\t\tmove,\n\t\tmove_timestamp,\n\t\tmove_location_id\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectDiplaLocation\nSelectCountryOfPortEntry derive(allocation_date = toDate(allocation_date),\n\t\tproduction_year = toInteger(production_year),\n\t\tevac_cost_pool = toDouble(evac_cost_pool),\n\t\tevac_cost_alt_pool = toDouble(evac_cost_alt_pool),\n\t\tbreak_even_price_pool = toDouble(break_even_price_pool),\n\t\tbreak_even_price_alt_pool = toDouble(break_even_price_alt_pool),\n\t\tdisposed_date_confirmed_by_the_customer = toString(disposed_date_confirmed_by_the_customer)) ~> DerivedColumn1\nDerivedColumn1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\tpartitionFileNames:['intermodal_potential_containers_to_deliver_writeback.snappy.parquet'],\n\ttruncate: true,\n\tpartitionBy('hash', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> CopytoADLS"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

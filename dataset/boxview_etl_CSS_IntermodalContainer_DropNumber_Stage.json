@@ -1,0 +1,24 @@
+{
+	"name": "boxview_etl_CSS_IntermodalContainer_DropNumber_Stage",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "boxview_asql",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ASQL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "Number",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "CSS_IntermodalContainer_DropNumber_Stage"
+		}
+	}
+}

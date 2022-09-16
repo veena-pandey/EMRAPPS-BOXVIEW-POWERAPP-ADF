@@ -1,0 +1,1160 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Equipment Inventory CSP dataverse Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow for transformation",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Export EquipmentInventory Data From Dataverse to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Load EquipmentInventory Data To Blob",
+								"type": "DataFlowReference",
+								"parameters": {
+									"ForceFullRefresh": {
+										"value": "@pipeline().parameters.ForceFullDatasetRefresh",
+										"type": "Expression"
+									}
+								}
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Copy equipment_inventory CSP to Dataverse",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data flow for transformation",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "equipmentinventorycsp",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DynamicsSink",
+								"writeBatchSize": 10,
+								"writeBehavior": "upsert",
+								"ignoreNullValues": false,
+								"alternateKeyName": "maersk_equipmentkey"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "eqpno",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "move_timestamp",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_movetimestamp",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "move",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_move",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "previous_move",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_previousmove",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "actfor",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_actfor",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "stempty",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_isempty",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "subtype",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_productsubtype",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "operator_code",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_operatorcode",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "damage_code",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_damagecode",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "bill_of_lading_number",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_billofladingnumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "booking_reference",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_bookingreference",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "longstanding_days",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_longstandingdays",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "actloc_short",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_actloc_short",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "pre_trip_inspection_status",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_pretripinspectionstatus",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "year_of_make",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_yearofmake",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "infleet_year",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_infleetyear",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "machinery_type",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_machinerytype",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "leasing_contract",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_leasingcontract",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "leasing_company",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_leasingcompany",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "release_free_time",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_releasefreetime",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "allowed_for_sale",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_allowedforsale",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "merc_mode",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_mercmode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "repair_estimate",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										},
+										"sink": {
+											"name": "maersk_repairestimate",
+											"type": "Double"
+										}
+									},
+									{
+										"source": {
+											"name": "eqioflt",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_eqioflt",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "equipment_reefer_type",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_equipmentreefertype",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "current_loc_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_current_loc_dsc",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "age_normal",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_agenormal",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "is_pass_through",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_ispassthrough",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "level_3_size",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_size",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "ignore_breakeven",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_ignorebreakevenprice",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "Evacuation_cost_per_box",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										},
+										"sink": {
+											"name": "maersk_evacuationcostperbox",
+											"type": "Double"
+										}
+									},
+									{
+										"source": {
+											"name": "emr_unit_cost",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										},
+										"sink": {
+											"name": "maersk_emrunitcosts",
+											"type": "Double"
+										}
+									},
+									{
+										"source": {
+											"name": "cherry_picking_fee",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_cherrypickingfee",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "move_timestamp_gate_buy",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_move_timestamp_gate_buy",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "inventory_type",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_inventorytype",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "gate_buy_gate_in_done",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_gatebuygateindone",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_move_date",
+											"type": "DateTime",
+											"physicalType": "INT96"
+										},
+										"sink": {
+											"name": "maersk_salesmovedate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "discharge_site",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_dischargesite",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "discharge_port_to_display",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_discharge_port_to_display",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "load_port_to_display",
+											"type": "Boolean",
+											"physicalType": "BOOLEAN"
+										},
+										"sink": {
+											"name": "maersk_load_port_to_display",
+											"type": "Boolean"
+										}
+									},
+									{
+										"source": {
+											"name": "last_move_from_fast_track",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_last_move_from_fast_track",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "key_to_price",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_keytoprice",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "price_category_from_price",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_pricecategoryfromprice",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_price",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_salesprice",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "price_to_compare",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_pricetocompare",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_minimum_price",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_salesmanagerminprice",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "regional_manager_minimum_price",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_regionalmanagerminprice",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "headquarter_minimum_price",
+											"type": "Int32",
+											"physicalType": "INT32"
+										},
+										"sink": {
+											"name": "maersk_hqminprice",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_dry",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_salesmanagerdry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_reefer",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_salesmanagerreefer",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "regional_manager_dry",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_regionalmanagerdry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "regional_manager_reefer",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_regionalmanagerreefer",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "teamid",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_team",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "load_countryid",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_loadcountry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "discharge_countryid",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_dischargecountry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "repair_country_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_repaircountry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "repair_location_id",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_repairlocation",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "current_country",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_currentcountry",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "current_site",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_currentsite",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "current_pool",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_currentpool",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "product_index",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_productindex",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "client",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_client",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "key_to_product",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_keytoproduct",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "checksum",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_datahash",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "area",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_area",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "arearegion",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_region",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "break_even_price"
+										},
+										"sink": {
+											"name": "maersk_minsalesprice"
+										}
+									},
+									{
+										"source": {
+											"name": "team",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_cspteamname"
+										}
+									},
+									{
+										"source": {
+											"name": "current_site_type"
+										},
+										"sink": {
+											"name": "maersk_currentsitetype"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_equipment_inventory_csp_intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Boxview_container",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy EquipmentInventory Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Intermediate Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Dataverse Exported Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "equipment_inventory",
+								"queryTimeout": "00:10:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_EquipmentInventoryCSP",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_equipment_inventory_csp_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Staging Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_equipment_inventory_csp_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Intermediate Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_equipment_inventory_csp_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Export EquipmentInventory Data From Dataverse to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Copy EquipmentInventory Data From ADX To Staging Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch >\n  <entity name=\"maersk_container\" >\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_containerid\" />\n    <attribute name=\"maersk_datahash\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "Boxview_container",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_equipment_inventory_csp_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Dataverse Exported Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_equipment_inventory_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete equipment_inventory CSP to Dataverse",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data flow for transformation",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "equipmentinventorycsp",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DynamicsSink",
+								"writeBatchSize": 10,
+								"writeBehavior": "upsert",
+								"ignoreNullValues": false,
+								"alternateKeyName": "maersk_equipmentkey"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "maersk_name"
+										},
+										"sink": {
+											"name": "maersk_name"
+										}
+									},
+									{
+										"source": {
+											"name": "maersk_stagefordelete"
+										},
+										"sink": {
+											"name": "maersk_stagefordelete"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_equipment_inventory_delete_csp_staging_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Boxview_container",
+								"type": "DatasetReference"
+							}
+						]
+					}
+				],
+				"parameters": {
+					"ForceFullDatasetRefresh": {
+						"type": "bool",
+						"defaultValue": false
+					}
+				},
+				"folder": {
+					"name": "CSP"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-10T09:56:41Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

@@ -1,0 +1,55 @@
+{
+	"name": "Load City Data To Blob",
+	"properties": {
+		"folder": {
+			"name": "CSP"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "blob_validated_vendor_list_v2_staging_data",
+						"type": "DatasetReference"
+					},
+					"name": "validatedvendorlistv2Stagingdata"
+				},
+				{
+					"dataset": {
+						"referenceName": "blob_country_exported_data",
+						"type": "DatasetReference"
+					},
+					"name": "CountryData"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "blob_city_intermediate_data",
+						"type": "DatasetReference"
+					},
+					"name": "IntermediateBlobCity",
+					"description": "Export data to blob_customer_data"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DataTransformation"
+				},
+				{
+					"name": "LookupCountry"
+				},
+				{
+					"name": "SelectCountry"
+				},
+				{
+					"name": "SelectRequiredColumns"
+				},
+				{
+					"name": "SelectDistinctValues"
+				}
+			],
+			"script": "source(output(\n\t\tactloc as string,\n\t\tcountry as string,\n\t\tcity as string,\n\t\tsite_name as string,\n\t\tsite_type as string,\n\t\temail_address as string,\n\t\tphone as string,\n\t\tcontact_person as string,\n\t\taddress_1 as string,\n\t\taddress_2 as string,\n\t\taddress_3 as string,\n\t\tcity_name as string,\n\t\tregion as string,\n\t\tpostal_code as string,\n\t\tlocal_tax as decimal(38,18),\n\t\tglobal_tax as decimal(38,18),\n\t\teu_tax as decimal(38,18),\n\t\tcustomer_service as string,\n\t\tsales_operations as string,\n\t\tcherry_picking_fee as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['validated_vendor_list_v2/*.parquet']) ~> validatedvendorlistv2Stagingdata\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_countrycode as string,\n\t\tmaersk_countryid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['country/*.parquet']) ~> CountryData\nvalidatedvendorlistv2Stagingdata derive(city = trim(toString(byName('city'))),\n\t\tcountry = upper(trim(toString(byName('country'))))) ~> DataTransformation\nSelectRequiredColumns, CountryData lookup(upper(maersk_country) == upper(CountryData@maersk_name),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCountry\nLookupCountry select(mapColumn(\n\t\tmaersk_citycode,\n\t\tmaersk_name = SelectRequiredColumns@maersk_name,\n\t\tmaersk_country = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCountry\nDataTransformation select(mapColumn(\n\t\tmaersk_citycode = city,\n\t\tmaersk_name = city,\n\t\tmaersk_country = country\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> SelectRequiredColumns\nSelectCountry aggregate(groupBy(maersk_citycode),\n\teach(match(name!='maersk_citycode'), $$ = first($$))) ~> SelectDistinctValues\nSelectDistinctValues sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tmapColumn(\n\t\tmaersk_citycode,\n\t\tmaersk_name,\n\t\tmaersk_country\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobCity"
+		}
+	}
+}

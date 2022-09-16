@@ -1,0 +1,125 @@
+{
+	"name": "Potential Container To Sell ADLS_writeback Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "ADLSWriteback",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Export PotentialContainer Data From Dataverse to Blob",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "Load_Potential_Container_To_Sell_Data_To_ADLS_writeback",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"CopytoADLS": {
+								"environment": {
+									"value": "@pipeline().globalParameters.EnvironmentType",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "Export PotentialContainer Data From Dataverse to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Dataverse Exported Folder",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings",
+							"maxRowsPerFile": 100000
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Potential_Container_To_Sell",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_potentialcontainertosell_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Delete Dataverse Exported Folder",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_potentialcontainertosell_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "CSS"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-05-17T04:59:53Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

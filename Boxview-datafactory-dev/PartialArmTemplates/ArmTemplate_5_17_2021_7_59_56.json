@@ -1,0 +1,2015 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/PMT_Price_Table_ADX')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Data",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "price_table_pre_price_mgmt_tool",
+								"queryTimeout": "00:10:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "country_cd",
+											"type": "String"
+										},
+										"sink": {
+											"name": "country_cd",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "site_code",
+											"type": "String"
+										},
+										"sink": {
+											"name": "site_code",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "price_category",
+											"type": "String"
+										},
+										"sink": {
+											"name": "price_category",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "price",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "price",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "price_compare_at",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "price_compare_at",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "minimum_price_sales_manager",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "minimum_price_sales_manager",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "minimum_price_regional_manager",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "minimum_price_regional_manager",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "minimum_price_hq",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "minimum_price_hq",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "surcharge_value",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "surcharge_value",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "key_from_inventory",
+											"type": "String"
+										},
+										"sink": {
+											"name": "key_from_inventory",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "edited_at_level",
+											"type": "String"
+										},
+										"sink": {
+											"name": "edited_at_level",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "edited_timestamp",
+											"type": "String"
+										},
+										"sink": {
+											"name": "edited_timestamp",
+											"type": "Int64",
+											"physicalType": "bigint"
+										}
+									},
+									{
+										"source": {
+											"name": "edited_by",
+											"type": "String"
+										},
+										"sink": {
+											"name": "edited_by",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "pool_id",
+											"type": "String"
+										},
+										"sink": {
+											"name": "pool_id",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "site",
+											"type": "String"
+										},
+										"sink": {
+											"name": "site",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "allowed_for_sale",
+											"type": "String"
+										},
+										"sink": {
+											"name": "allowed_for_sale",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "area",
+											"type": "String"
+										},
+										"sink": {
+											"name": "area",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "team_name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "team_name",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "country_dsc",
+											"type": "String"
+										},
+										"sink": {
+											"name": "country_dsc",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "regional_manager_dry",
+											"type": "String"
+										},
+										"sink": {
+											"name": "regional_manager_dry",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "regional_manager_reefer",
+											"type": "String"
+										},
+										"sink": {
+											"name": "regional_manager_reefer",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_dry",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_manager_dry",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_reefer",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_manager_reefer",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_operations",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_operations",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "customer_service",
+											"type": "String"
+										},
+										"sink": {
+											"name": "customer_service",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_backup",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_manager_backup",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_Pricetable",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Blob_PMT_Pricedata_Stage",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy to sql stage",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Copy data1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "PMT_price_table_adx",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "sp_mergedata",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "Copy to sql stage",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[PMT_PriceTable_Mergedata]"
+						},
+						"linkedServiceName": {
+							"referenceName": "boxview_asql",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Delete Staging Data",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "Blob_PMT_Pricedata_Stage",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"folder": {
+					"name": "SQL-Sync"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-10T05:07:59Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/datasets/AzureDataExplorer_Pricetable')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Potential Container To Sell ADLS_writeback Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ADLSWriteback",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Export PotentialContainer Data From Dataverse to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Load_Potential_Container_To_Sell_Data_To_ADLS_writeback",
+								"type": "DataFlowReference",
+								"datasetParameters": {
+									"CopytoADLS": {
+										"environment": {
+											"value": "@pipeline().globalParameters.EnvironmentType",
+											"type": "Expression"
+										}
+									}
+								}
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Export PotentialContainer Data From Dataverse to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Dataverse Exported Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 100000
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_Potential_Container_To_Sell",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_potentialcontainertosell_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Dataverse Exported Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"folder": {
+					"name": "CSS"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-11T13:07:40Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/dataflows/Load_Potential_Container_To_Sell_Data_To_ADLS_writeback')]",
+				"[concat(variables('factoryId'), '/datasets/boxview_Potential_Container_To_Sell')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_Account')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "customer"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_CSSContainer')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "container_adx"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_Contact')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "contact"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_Country')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "country"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_DMRLContainer')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "containers_with_mrl"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_DMRLContainerADX')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "container_adx"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_DMRLWorkorder')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "work_orders_with_repair_limits"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_EquipmentInventoryCSP')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "equipment_inventory"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_IntermodelPotentialContainerToDeliver')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "intermodal_potential_containers_to_deliver"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_PotentialContainerToSell')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "potential_containers_to_sell_hubble"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_Pricetable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "price_table_pre_price_mgmt_tool"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_ProductIndex')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "product_matrix"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_Site')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataExplorer_BoxView",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ADX"
+				},
+				"annotations": [],
+				"type": "AzureDataExplorerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": "site"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataExplorer_BoxView')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable_Stage')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "country_cd",
+						"type": "varchar"
+					},
+					{
+						"name": "site_code",
+						"type": "varchar"
+					},
+					{
+						"name": "price_category",
+						"type": "varchar"
+					},
+					{
+						"name": "price",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "price_compare_at",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "minimum_price_sales_manager",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "minimum_price_regional_manager",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "minimum_price_hq",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "surcharge_value",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "key_from_inventory",
+						"type": "varchar"
+					},
+					{
+						"name": "edited_at_level",
+						"type": "varchar"
+					},
+					{
+						"name": "edited_timestamp",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "edited_by",
+						"type": "varchar"
+					},
+					{
+						"name": "pool_id",
+						"type": "varchar"
+					},
+					{
+						"name": "site",
+						"type": "varchar"
+					},
+					{
+						"name": "allowed_for_sale",
+						"type": "varchar"
+					},
+					{
+						"name": "area",
+						"type": "varchar"
+					},
+					{
+						"name": "team_name",
+						"type": "varchar"
+					},
+					{
+						"name": "country_dsc",
+						"type": "varchar"
+					},
+					{
+						"name": "regional_manager_dry",
+						"type": "varchar"
+					},
+					{
+						"name": "regional_manager_reefer",
+						"type": "varchar"
+					},
+					{
+						"name": "sales_manager_dry",
+						"type": "varchar"
+					},
+					{
+						"name": "sales_manager_reefer",
+						"type": "varchar"
+					},
+					{
+						"name": "sales_operations",
+						"type": "varchar"
+					},
+					{
+						"name": "customer_service",
+						"type": "varchar"
+					},
+					{
+						"name": "sales_manager_backup",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "PMT_PriceTable_Stage"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Boxview_container')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_container"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Datalake_Intermodal_Potential_Containers_To_Deliver_ADLS_writeback')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStore_ApplicationServicePrincipal",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "CSS"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureDataLakeStoreLocation",
+						"folderPath": "datalake-dev/lob/boxviewapps/writebacks/intermodal_potential_containers_to_deliver_writeback"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStore_ApplicationServicePrincipal')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Account')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "account"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Area')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_area"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_CSSContainer')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_csscontainer"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_City')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_city"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Cluster')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_cluster"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Contact')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "contact"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Country')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_country"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Currency')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "transactioncurrency"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_DMRLContainer')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_dmrlcontainer"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_DMRLWorkorder')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_workorder"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Intermodal_Container')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_intermodalcontainer"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Old_Category')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_oldcategory"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Pool')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_pool"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Potential_Container_To_Sell')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_containertosale"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Product_Index')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_productindex"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Product_Subtype')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_productsubtype"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Product_Type')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_producttype"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Region')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_region"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Site_CSP')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "maersk_site"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_Team')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "team"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_etl_pmt_price_table')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "boxview_asql",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ASQL"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "country_cd",
+						"type": "varchar"
+					},
+					{
+						"name": "site_code",
+						"type": "varchar"
+					},
+					{
+						"name": "price_category",
+						"type": "varchar"
+					},
+					{
+						"name": "price",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "price_compare_at",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "minimum_price_sales_manager",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "minimum_price_regional_manager",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "minimum_price_hq",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "surcharge_value",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "key_from_inventory",
+						"type": "varchar"
+					},
+					{
+						"name": "edited_at_level",
+						"type": "varchar"
+					},
+					{
+						"name": "edited_timestamp",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "edited_by",
+						"type": "varchar"
+					},
+					{
+						"name": "pool_id",
+						"type": "varchar"
+					},
+					{
+						"name": "site",
+						"type": "varchar"
+					},
+					{
+						"name": "allowed_for_sale",
+						"type": "varchar"
+					},
+					{
+						"name": "area",
+						"type": "varchar"
+					},
+					{
+						"name": "team_name",
+						"type": "varchar"
+					},
+					{
+						"name": "country_dsc",
+						"type": "varchar"
+					},
+					{
+						"name": "regional_manager_dry",
+						"type": "varchar"
+					},
+					{
+						"name": "regional_manager_reefer",
+						"type": "varchar"
+					},
+					{
+						"name": "sales_manager_dry",
+						"type": "varchar"
+					},
+					{
+						"name": "sales_manager_reefer",
+						"type": "varchar"
+					},
+					{
+						"name": "sales_operations",
+						"type": "varchar"
+					},
+					{
+						"name": "customer_service",
+						"type": "varchar"
+					},
+					{
+						"name": "sales_manager_backup",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "PMT_PriceTable"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/boxview_user')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "BoxView_Dataverse",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Dataverse"
+				},
+				"annotations": [],
+				"type": "DynamicsEntity",
+				"schema": [],
+				"typeProperties": {
+					"entityName": "systemuser"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/BoxView_Dataverse')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/datalake_pmt_price_table_writeback')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStore_ApplicationServicePrincipal",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"environment": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "PMT"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureDataLakeStoreLocation",
+						"folderPath": {
+							"value": "@concat('datalake-',dataset().environment,'/lob/boxviewapps/writebacks/price_table_price_mgmt_tool_writeback')",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStore_ApplicationServicePrincipal')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/datalake_potential_containers_to_sell_hubble_writeback')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStore_ApplicationServicePrincipal",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"environment": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "CSS"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureDataLakeStoreLocation",
+						"folderPath": {
+							"value": "@concat('datalake-',dataset().environment,'/lob/boxviewapps/writebacks/potential_containers_to_sell_hubble_writeback')",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStore_ApplicationServicePrincipal')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer_BoxView')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDataExplorer",
+				"typeProperties": {
+					"endpoint": "https://maestrodataexplorer.westeurope.kusto.windows.net",
+					"tenant": "05d75c05-fa1a-42e7-9cf1-eb416c396f2d",
+					"servicePrincipalId": "c50790fa-ce64-49fb-83c4-ce5956ebef81",
+					"servicePrincipalKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "BoxViewVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "boxviewapps-client-secret"
+					},
+					"database": "box_view"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStore_ApplicationServicePrincipal')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDataLakeStore",
+				"typeProperties": {
+					"dataLakeStoreUri": "https://dlsazewsmlitdatalake001.azuredatalakestore.net/webhdfs/v1",
+					"servicePrincipalId": "c50790fa-ce64-49fb-83c4-ce5956ebef81",
+					"servicePrincipalKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "BoxViewVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "boxviewapps-client-secret"
+					},
+					"tenant": "05d75c05-fa1a-42e7-9cf1-eb416c396f2d",
+					"subscriptionId": "",
+					"resourceGroupName": ""
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/BoxView_Dataverse')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "Dynamics",
+				"typeProperties": {
+					"deploymentType": "Online",
+					"serviceUri": "https://mrskboxview-dev.crm4.dynamics.com",
+					"authenticationType": "AADServicePrincipal",
+					"servicePrincipalCredentialType": "ServicePrincipalKey",
+					"servicePrincipalId": "b44ef989-ca28-4f9c-b127-3e2b31142820",
+					"servicePrincipalCredential": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "BoxViewVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "DataverseIntegrationAppUserSecret"
+					}
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load_Potential_Container_To_Sell_Data_To_ADLS_writeback')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSS"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "sitedatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_potentialcontainertosell_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "Dataversedata"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_pool_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "pooldatafromblob"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "datalake_potential_containers_to_sell_hubble_writeback",
+								"type": "DatasetReference"
+							},
+							"name": "CopytoADLS",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "SelectRequiredColumns"
+						},
+						{
+							"name": "LookupLastRailDestination"
+						},
+						{
+							"name": "SelectLastRailDestination"
+						},
+						{
+							"name": "LookupCDSDestination"
+						},
+						{
+							"name": "SelectCDSDestination"
+						},
+						{
+							"name": "LookupLastMotherVesselDestinationLocation"
+						},
+						{
+							"name": "SelectLastMotherVesselDestinationLocation"
+						},
+						{
+							"name": "LookupAlternateSellLocation"
+						},
+						{
+							"name": "SelectAlternateSellLocation"
+						},
+						{
+							"name": "LookupPool"
+						},
+						{
+							"name": "SelectPool"
+						},
+						{
+							"name": "LookupRegPool"
+						},
+						{
+							"name": "SelectRegPool"
+						},
+						{
+							"name": "LookupAlternateSellPool"
+						},
+						{
+							"name": "SelectAlternateSellPool"
+						},
+						{
+							"name": "LookupDiplalocationid"
+						},
+						{
+							"name": "Selectdiplalocationid"
+						},
+						{
+							"name": "TimeStamptoBigInt"
+						}
+					],
+					"script": "source(output(\n\t\tmaersk_siteid as string,\n\t\tmaersk_name as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> sitedatafromblob\nsource(output(\n\t\tcreatedby as string,\n\t\tcreatedbyname as string,\n\t\tcreatedbyyominame as string,\n\t\tcreatedon as timestamp,\n\t\tcreatedonbehalfby as string,\n\t\tcreatedonbehalfbyname as string,\n\t\tcreatedonbehalfbyyominame as string,\n\t\timportsequencenumber as integer,\n\t\tmaersk_address as string,\n\t\tmaersk_allocatedby as string,\n\t\tmaersk_allocatedbyalgorythm as boolean,\n\t\tmaersk_allocateddeallocateddate as timestamp,\n\t\tmaersk_allocationdate as timestamp,\n\t\tmaersk_alternateselllocation as string,\n\t\tmaersk_alternateselllocationname as string,\n\t\tmaersk_alternatesellpool as string,\n\t\tmaersk_alternatesellpoolname as string,\n\t\tmaersk_bookingnumber as string,\n\t\tmaersk_brand as string,\n\t\tmaersk_breakevenpricealtpool as decimal(38,18),\n\t\tmaersk_breakevenpricepool as decimal(38,18),\n\t\tmaersk_carriername as string,\n\t\tmaersk_cdsdestination as string,\n\t\tmaersk_cdsdestinationname as string,\n\t\tmaersk_clientname as string,\n\t\tmaersk_consigneename as string,\n\t\tmaersk_consigneescvcode as string,\n\t\tmaersk_containertosaleid as string,\n\t\tmaersk_datahash as string,\n\t\tmaersk_destinationarrivaldate as timestamp,\n\t\tmaersk_destinationarrivaltimeexpectedutc as timestamp,\n\t\tmaersk_destinationlocationname as string,\n\t\tmaersk_diplalocation as string,\n\t\tmaersk_diplalocationname as string,\n\t\tmaersk_dispatchby as string,\n\t\tmaersk_dispatchdate as timestamp,\n\t\tmaersk_dropnumber as string,\n\t\tmaersk_email as string,\n\t\tmaersk_equipmentgroup as string,\n\t\tmaersk_equipmentowntype as string,\n\t\tmaersk_evaccostaltpool as decimal(38,18),\n\t\tmaersk_evacostpool as decimal(38,18),\n\t\tmaersk_haulagetype as integer,\n\t\tmaersk_isallocated as boolean,\n\t\tmaersk_lastmothervesselarrivaltime as timestamp,\n\t\tmaersk_lastmothervesseldestinationlocation as string,\n\t\tmaersk_lastmothervesseldestinationlocationname as string,\n\t\tmaersk_lastraildestination as string,\n\t\tmaersk_lastraildestinationname as string,\n\t\tmaersk_name as string,\n\t\tmaersk_nextcarriername as string,\n\t\tmaersk_nextwonumber as string,\n\t\tmaersk_placeofdeliverylocationid as string,\n\t\tmaersk_placeofdeliverylocationidname as string,\n\t\tmaersk_pool as string,\n\t\tmaersk_poolallocatedto as string,\n\t\tmaersk_poolallocatedtoname as string,\n\t\tmaersk_poolcode as string,\n\t\tmaersk_poolname as string,\n\t\tmaersk_primarycompositekey as string,\n\t\tmaersk_productionyear as string,\n\t\tmaersk_railcombo as boolean,\n\t\tmaersk_region as string,\n\t\tmaersk_regpool as string,\n\t\tmaersk_regpoolname as string,\n\t\tmaersk_shipmentid as string,\n\t\tmaersk_truckcarriername as string,\n\t\tmaersk_type as string,\n\t\tmaersk_week as integer,\n\t\tmaersk_weekloc as string,\n\t\tmaersk_wonumber as string,\n\t\tmodifiedby as string,\n\t\tmodifiedbyname as string,\n\t\tmodifiedbyyominame as string,\n\t\tmodifiedon as timestamp,\n\t\tmodifiedonbehalfby as string,\n\t\tmodifiedonbehalfbyname as string,\n\t\tmodifiedonbehalfbyyominame as string,\n\t\toverriddencreatedon as timestamp,\n\t\townerid as string,\n\t\towneridname as string,\n\t\towneridtype as string,\n\t\towneridyominame as string,\n\t\towningbusinessunit as string,\n\t\towningteam as string,\n\t\towninguser as string,\n\t\tstatecode as integer,\n\t\tstatuscode as integer,\n\t\ttimezoneruleversionnumber as integer,\n\t\tutcconversiontimezonecode as integer,\n\t\tversionnumber as long\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['potentialcontainertosell']) ~> Dataversedata\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_poolid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['pool/*.parquet']) ~> pooldatafromblob\nTimeStamptoBigInt select(mapColumn(\n\t\tcontainer_id = maersk_name,\n\t\tdrop_number = maersk_dropnumber,\n\t\tconsignee_scv_code = maersk_consigneescvcode,\n\t\tpool_id = maersk_pool,\n\t\treg_pool = maersk_regpool,\n\t\teqpno = maersk_name,\n\t\tlast_mother_vessel_arrival_time = maersk_lastmothervesselarrivaltime,\n\t\tlast_mother_vessel_destination_location_id = maersk_lastmothervesseldestinationlocation,\n\t\tplace_of_delivery_location_id = maersk_placeofdeliverylocationid,\n\t\tdestination_arrival_time_utc_expected = maersk_destinationarrivaltimeexpectedutc,\n\t\tshipment_id = maersk_shipmentid,\n\t\tbooking_number = maersk_bookingnumber,\n\t\tbrand = maersk_brand,\n\t\tequipment_group = maersk_equipmentgroup,\n\t\tproduction_year = maersk_productionyear,\n\t\tequipment_own_type = maersk_equipmentowntype,\n\t\tdestination_arrival_date = maersk_destinationarrivaldate,\n\t\tdipla_location_id = maersk_diplalocation,\n\t\tdipla_location_name = maersk_diplalocationname,\n\t\tdestination_location_name = maersk_destinationlocationname,\n\t\tconsignee_name = maersk_consigneename,\n\t\tlast_rail_dest = maersk_lastraildestination,\n\t\tCARRIER_NAME = maersk_carriername,\n\t\tNEXT_WONUMBER = maersk_nextwonumber,\n\t\tNEXT_CARRIER_NAME = maersk_nextcarriername,\n\t\tWONUMBER = maersk_wonumber,\n\t\trail_combo = maersk_railcombo,\n\t\two_number = maersk_wonumber,\n\t\ttruck_carrier_name = maersk_truckcarriername,\n\t\tcds_dest = maersk_cdsdestination,\n\t\tregion = maersk_region,\n\t\talternate_sell_location = maersk_alternateselllocation,\n\t\talternate_sell_pool = maersk_alternatesellpool,\n\t\tbreak_even_price_pool = maersk_breakevenpricepool,\n\t\tbreak_even_price_alt_pool = maersk_breakevenpricealtpool,\n\t\tweek = maersk_week,\n\t\thaulage_type = maersk_haulagetype,\n\t\tpool_allocated_to = maersk_poolallocatedto,\n\t\tallocation_date = maersk_allocationdate,\n\t\tallocated_by = maersk_allocatedby,\n\t\tallocated_by_algorithm = maersk_allocatedbyalgorythm,\n\t\tdispatch_date = maersk_dispatchdate,\n\t\tdispatch_by = maersk_dispatchby,\n\t\tweek_loc = maersk_weekloc,\n\t\tis_allocated = maersk_isallocated,\n\t\tclient_name = maersk_clientname,\n\t\taddress = maersk_address,\n\t\temail = maersk_email,\n\t\ttype = maersk_type,\n\t\tevac_cost_pool = maersk_evacostpool,\n\t\tevac_cost_alt_pool = maersk_evaccostaltpool,\n\t\tprimary_composite_key = maersk_primarycompositekey\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: true) ~> SelectRequiredColumns\nSelectdiplalocationid, sitedatafromblob lookup(last_rail_dest == maersk_siteid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupLastRailDestination\nLookupLastRailDestination select(mapColumn(\n\t\tcontainer_id,\n\t\tdrop_number,\n\t\tconsignee_scv_code,\n\t\tpool_id,\n\t\treg_pool,\n\t\teqpno,\n\t\tlast_mother_vessel_arrival_time,\n\t\tlast_mother_vessel_destination_location_id,\n\t\tplace_of_delivery_location_id,\n\t\tdestination_arrival_time_utc_expected,\n\t\tshipment_id,\n\t\tbooking_number,\n\t\tbrand,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tequipment_own_type,\n\t\tdestination_arrival_date,\n\t\tdipla_location_id,\n\t\tdipla_location_name,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tlast_rail_dest = maersk_name,\n\t\tCARRIER_NAME,\n\t\tNEXT_WONUMBER,\n\t\tNEXT_CARRIER_NAME,\n\t\tWONUMBER,\n\t\trail_combo,\n\t\two_number,\n\t\ttruck_carrier_name,\n\t\tcds_dest,\n\t\tregion,\n\t\talternate_sell_location,\n\t\talternate_sell_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\tweek,\n\t\thaulage_type,\n\t\tpool_allocated_to,\n\t\tallocation_date,\n\t\tallocated_by,\n\t\tallocated_by_algorithm,\n\t\tdispatch_date,\n\t\tdispatch_by,\n\t\tweek_loc,\n\t\tis_allocated,\n\t\tclient_name,\n\t\taddress,\n\t\temail,\n\t\ttype,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tprimary_composite_key\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectLastRailDestination\nSelectLastRailDestination, sitedatafromblob lookup(cds_dest == maersk_siteid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCDSDestination\nLookupCDSDestination select(mapColumn(\n\t\tcontainer_id,\n\t\tdrop_number,\n\t\tconsignee_scv_code,\n\t\tpool_id,\n\t\treg_pool,\n\t\teqpno,\n\t\tlast_mother_vessel_arrival_time,\n\t\tlast_mother_vessel_destination_location_id,\n\t\tplace_of_delivery_location_id,\n\t\tdestination_arrival_time_utc_expected,\n\t\tshipment_id,\n\t\tbooking_number,\n\t\tbrand,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tequipment_own_type,\n\t\tdestination_arrival_date,\n\t\tdipla_location_id,\n\t\tdipla_location_name,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tlast_rail_dest,\n\t\tCARRIER_NAME,\n\t\tNEXT_WONUMBER,\n\t\tNEXT_CARRIER_NAME,\n\t\tWONUMBER,\n\t\trail_combo,\n\t\two_number,\n\t\ttruck_carrier_name,\n\t\tcds_dest = maersk_name,\n\t\tregion,\n\t\talternate_sell_location,\n\t\talternate_sell_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\tweek,\n\t\thaulage_type,\n\t\tpool_allocated_to,\n\t\tallocation_date,\n\t\tallocated_by,\n\t\tallocated_by_algorithm,\n\t\tdispatch_date,\n\t\tdispatch_by,\n\t\tweek_loc,\n\t\tis_allocated,\n\t\tclient_name,\n\t\taddress,\n\t\temail,\n\t\ttype,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tprimary_composite_key\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCDSDestination\nSelectCDSDestination, sitedatafromblob lookup(last_mother_vessel_destination_location_id == maersk_siteid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupLastMotherVesselDestinationLocation\nLookupLastMotherVesselDestinationLocation select(mapColumn(\n\t\tcontainer_id,\n\t\tdrop_number,\n\t\tconsignee_scv_code,\n\t\tpool_id,\n\t\treg_pool,\n\t\teqpno,\n\t\tlast_mother_vessel_arrival_time,\n\t\tlast_mother_vessel_destination_location_id = maersk_name,\n\t\tplace_of_delivery_location_id,\n\t\tdestination_arrival_time_utc_expected,\n\t\tshipment_id,\n\t\tbooking_number,\n\t\tbrand,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tequipment_own_type,\n\t\tdestination_arrival_date,\n\t\tdipla_location_id,\n\t\tdipla_location_name,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tlast_rail_dest,\n\t\tCARRIER_NAME,\n\t\tNEXT_WONUMBER,\n\t\tNEXT_CARRIER_NAME,\n\t\tWONUMBER,\n\t\trail_combo,\n\t\two_number,\n\t\ttruck_carrier_name,\n\t\tcds_dest,\n\t\tregion,\n\t\talternate_sell_location,\n\t\talternate_sell_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\tweek,\n\t\thaulage_type,\n\t\tpool_allocated_to,\n\t\tallocation_date,\n\t\tallocated_by,\n\t\tallocated_by_algorithm,\n\t\tdispatch_date,\n\t\tdispatch_by,\n\t\tweek_loc,\n\t\tis_allocated,\n\t\tclient_name,\n\t\taddress,\n\t\temail,\n\t\ttype,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tprimary_composite_key\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectLastMotherVesselDestinationLocation\nSelectLastMotherVesselDestinationLocation, sitedatafromblob lookup(alternate_sell_location == maersk_siteid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupAlternateSellLocation\nLookupAlternateSellLocation select(mapColumn(\n\t\tcontainer_id,\n\t\tdrop_number,\n\t\tconsignee_scv_code,\n\t\tpool_id,\n\t\treg_pool,\n\t\teqpno,\n\t\tlast_mother_vessel_arrival_time,\n\t\tlast_mother_vessel_destination_location_id,\n\t\tplace_of_delivery_location_id,\n\t\tdestination_arrival_time_utc_expected,\n\t\tshipment_id,\n\t\tbooking_number,\n\t\tbrand,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tequipment_own_type,\n\t\tdestination_arrival_date,\n\t\tdipla_location_id,\n\t\tdipla_location_name,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tlast_rail_dest,\n\t\tCARRIER_NAME,\n\t\tNEXT_WONUMBER,\n\t\tNEXT_CARRIER_NAME,\n\t\tWONUMBER,\n\t\trail_combo,\n\t\two_number,\n\t\ttruck_carrier_name,\n\t\tcds_dest,\n\t\tregion,\n\t\talternate_sell_location = maersk_name,\n\t\talternate_sell_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\tweek,\n\t\thaulage_type,\n\t\tpool_allocated_to,\n\t\tallocation_date,\n\t\tallocated_by,\n\t\tallocated_by_algorithm,\n\t\tdispatch_date,\n\t\tdispatch_by,\n\t\tweek_loc,\n\t\tis_allocated,\n\t\tclient_name,\n\t\taddress,\n\t\temail,\n\t\ttype,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tprimary_composite_key\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectAlternateSellLocation\nSelectAlternateSellLocation, pooldatafromblob lookup(pool_id == maersk_poolid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupPool\nLookupPool select(mapColumn(\n\t\tcontainer_id,\n\t\tdrop_number,\n\t\tconsignee_scv_code,\n\t\tpool_id = maersk_name,\n\t\treg_pool,\n\t\teqpno,\n\t\tlast_mother_vessel_arrival_time,\n\t\tlast_mother_vessel_destination_location_id,\n\t\tplace_of_delivery_location_id,\n\t\tdestination_arrival_time_utc_expected,\n\t\tshipment_id,\n\t\tbooking_number,\n\t\tbrand,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tequipment_own_type,\n\t\tdestination_arrival_date,\n\t\tdipla_location_id,\n\t\tdipla_location_name,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tlast_rail_dest,\n\t\tCARRIER_NAME,\n\t\tNEXT_WONUMBER,\n\t\tNEXT_CARRIER_NAME,\n\t\tWONUMBER,\n\t\trail_combo,\n\t\two_number,\n\t\ttruck_carrier_name,\n\t\tcds_dest,\n\t\tregion,\n\t\talternate_sell_location,\n\t\talternate_sell_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\tweek,\n\t\thaulage_type,\n\t\tpool_allocated_to,\n\t\tallocation_date,\n\t\tallocated_by,\n\t\tallocated_by_algorithm,\n\t\tdispatch_date,\n\t\tdispatch_by,\n\t\tweek_loc,\n\t\tis_allocated,\n\t\tclient_name,\n\t\taddress,\n\t\temail,\n\t\ttype,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tprimary_composite_key\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectPool\nSelectPool, pooldatafromblob lookup(reg_pool == maersk_poolid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupRegPool\nLookupRegPool select(mapColumn(\n\t\tcontainer_id,\n\t\tdrop_number,\n\t\tconsignee_scv_code,\n\t\tpool_id,\n\t\treg_pool = maersk_name,\n\t\teqpno,\n\t\tlast_mother_vessel_arrival_time,\n\t\tlast_mother_vessel_destination_location_id,\n\t\tplace_of_delivery_location_id,\n\t\tdestination_arrival_time_utc_expected,\n\t\tshipment_id,\n\t\tbooking_number,\n\t\tbrand,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tequipment_own_type,\n\t\tdestination_arrival_date,\n\t\tdipla_location_id,\n\t\tdipla_location_name,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tlast_rail_dest,\n\t\tCARRIER_NAME,\n\t\tNEXT_WONUMBER,\n\t\tNEXT_CARRIER_NAME,\n\t\tWONUMBER,\n\t\trail_combo,\n\t\two_number,\n\t\ttruck_carrier_name,\n\t\tcds_dest,\n\t\tregion,\n\t\talternate_sell_location,\n\t\talternate_sell_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\tweek,\n\t\thaulage_type,\n\t\tpool_allocated_to,\n\t\tallocation_date,\n\t\tallocated_by,\n\t\tallocated_by_algorithm,\n\t\tdispatch_date,\n\t\tdispatch_by,\n\t\tweek_loc,\n\t\tis_allocated,\n\t\tclient_name,\n\t\taddress,\n\t\temail,\n\t\ttype,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tprimary_composite_key\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectRegPool\nSelectRegPool, pooldatafromblob lookup(alternate_sell_pool == maersk_poolid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupAlternateSellPool\nLookupAlternateSellPool select(mapColumn(\n\t\tcontainer_id,\n\t\tdrop_number,\n\t\tconsignee_scv_code,\n\t\tpool_id,\n\t\treg_pool,\n\t\teqpno,\n\t\tlast_mother_vessel_arrival_time,\n\t\tlast_mother_vessel_destination_location_id,\n\t\tplace_of_delivery_location_id,\n\t\tdestination_arrival_time_utc_expected,\n\t\tshipment_id,\n\t\tbooking_number,\n\t\tbrand,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tequipment_own_type,\n\t\tdestination_arrival_date,\n\t\tdipla_location_id,\n\t\tdipla_location_name,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tlast_rail_dest,\n\t\tCARRIER_NAME,\n\t\tNEXT_WONUMBER,\n\t\tNEXT_CARRIER_NAME,\n\t\tWONUMBER,\n\t\trail_combo,\n\t\two_number,\n\t\ttruck_carrier_name,\n\t\tcds_dest,\n\t\tregion,\n\t\talternate_sell_location,\n\t\talternate_sell_pool = maersk_name,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\tweek,\n\t\thaulage_type,\n\t\tpool_allocated_to,\n\t\tallocation_date,\n\t\tallocated_by,\n\t\tallocated_by_algorithm,\n\t\tdispatch_date,\n\t\tdispatch_by,\n\t\tweek_loc,\n\t\tis_allocated,\n\t\tclient_name,\n\t\taddress,\n\t\temail,\n\t\ttype,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tprimary_composite_key\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectAlternateSellPool\nSelectRequiredColumns, sitedatafromblob lookup(dipla_location_id == maersk_siteid,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupDiplalocationid\nLookupDiplalocationid select(mapColumn(\n\t\tcontainer_id,\n\t\tdrop_number,\n\t\tconsignee_scv_code,\n\t\tpool_id,\n\t\treg_pool,\n\t\teqpno,\n\t\tlast_mother_vessel_arrival_time,\n\t\tlast_mother_vessel_destination_location_id,\n\t\tplace_of_delivery_location_id,\n\t\tdestination_arrival_time_utc_expected,\n\t\tshipment_id,\n\t\tbooking_number,\n\t\tbrand,\n\t\tequipment_group,\n\t\tproduction_year,\n\t\tequipment_own_type,\n\t\tdestination_arrival_date,\n\t\tdipla_location_id = maersk_name,\n\t\tdipla_location_name,\n\t\tdestination_location_name,\n\t\tconsignee_name,\n\t\tlast_rail_dest,\n\t\tCARRIER_NAME,\n\t\tNEXT_WONUMBER,\n\t\tNEXT_CARRIER_NAME,\n\t\tWONUMBER,\n\t\trail_combo,\n\t\two_number,\n\t\ttruck_carrier_name,\n\t\tcds_dest,\n\t\tregion,\n\t\talternate_sell_location,\n\t\talternate_sell_pool,\n\t\tbreak_even_price_pool,\n\t\tbreak_even_price_alt_pool,\n\t\tweek,\n\t\thaulage_type,\n\t\tpool_allocated_to,\n\t\tallocation_date,\n\t\tallocated_by,\n\t\tallocated_by_algorithm,\n\t\tdispatch_date,\n\t\tdispatch_by,\n\t\tweek_loc,\n\t\tis_allocated,\n\t\tclient_name,\n\t\taddress,\n\t\temail,\n\t\ttype,\n\t\tevac_cost_pool,\n\t\tevac_cost_alt_pool,\n\t\tprimary_composite_key\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Selectdiplalocationid\nDataversedata derive(maersk_lastmothervesselarrivaltime = toLong(  toTimestamp('2020-11-11 08:00:00.000', 'yyyy-MM-dd HH:mm:ss.SSS')  - toTimestamp('1970-01-01 00:00:00.000', 'yyyy-MM-dd HH:mm:ss.SSS') ) * 1000l,\n\t\tmaersk_destinationarrivaltimeexpectedutc = toLong(  toTimestamp('2020-11-11 08:00:00.000', 'yyyy-MM-dd HH:mm:ss.SSS')  - toTimestamp('1970-01-01 00:00:00.000', 'yyyy-MM-dd HH:mm:ss.SSS') ) * 1000l) ~> TimeStamptoBigInt\nSelectAlternateSellPool sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\tpartitionFileNames:['potential_containers_to_sell_hubble_writeback.snappy.parquet'],\n\tpartitionBy('hash', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> CopytoADLS"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/datasets/datalake_potential_containers_to_sell_hubble_writeback')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStore_dev_ApplicationServicePrincipal')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDataLakeStore",
+				"typeProperties": {
+					"dataLakeStoreUri": "https://dlsazewsmlitdatalake001.azuredatalakestore.net/webhdfs/v1",
+					"servicePrincipalId": "c50790fa-ce64-49fb-83c4-ce5956ebef81",
+					"servicePrincipalKey": {
+						"type": "SecureString",
+						"value": "**********"
+					},
+					"tenant": "05d75c05-fa1a-42e7-9cf1-eb416c396f2d",
+					"subscriptionId": "",
+					"resourceGroupName": ""
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

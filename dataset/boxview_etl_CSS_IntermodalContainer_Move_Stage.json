@@ -1,0 +1,24 @@
+{
+	"name": "boxview_etl_CSS_IntermodalContainer_Move_Stage",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "boxview_asql",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ASQL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "Move",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "CSS_IntermodalContainer_Move_Stage"
+		}
+	}
+}

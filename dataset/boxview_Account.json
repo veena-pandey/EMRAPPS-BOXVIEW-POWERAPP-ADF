@@ -1,0 +1,19 @@
+{
+	"name": "boxview_Account",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "BoxView_Dataverse",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Dataverse"
+		},
+		"annotations": [],
+		"type": "DynamicsEntity",
+		"schema": [],
+		"typeProperties": {
+			"entityName": "account"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

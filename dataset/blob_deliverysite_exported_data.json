@@ -1,0 +1,23 @@
+{
+	"name": "blob_deliverysite_exported_data",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "CSP BLOB/Export"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "deliverysite",
+				"container": "exporteddata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

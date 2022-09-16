@@ -1,0 +1,110 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "Boxview-datafactory-dev"
+		},
+		"AzureBlobStorage_properties_typeProperties_connectionString_secretName": {
+			"value": "BlobStorageConnectionString"
+		},
+		"AzureBlobStorage1_properties_typeProperties_connectionString_secretName": {
+			"value": "BlobStorageConnectionString"
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_endpoint": {
+			"value": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "BoxViewADXUrl"
+			}
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_tenant": {
+			"value": "05d75c05-fa1a-42e7-9cf1-eb416c396f2d"
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_servicePrincipalId": {
+			"value": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "boxviewapps-client-id"
+			}
+		},
+		"AzureDataExplorer_BoxView_properties_typeProperties_database": {
+			"value": "box_view"
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_dataLakeStoreUri": {
+			"value": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "BoxViewDataLakeStoreUri"
+			}
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_servicePrincipalId": {
+			"value": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "boxviewapps-client-id"
+			}
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_tenant": {
+			"value": "05d75c05-fa1a-42e7-9cf1-eb416c396f2d"
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_subscriptionId": {
+			"value": ""
+		},
+		"AzureDataLakeStore_ApplicationServicePrincipal_properties_typeProperties_resourceGroupName": {
+			"value": ""
+		},
+		"BoxViewVault_ls_properties_typeProperties_baseUrl": {
+			"value": "https://boxviewvault.vault.azure.net/"
+		},
+		"BoxView_Dataverse_properties_typeProperties_servicePrincipalId": {
+			"value": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "BoxViewVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "DataverseServicePrincipalId"
+			}
+		},
+		"boxview_asql_properties_typeProperties_connectionString_secretName": {
+			"value": "AzureSQLConnectionString"
+		},
+		"CSP Main Schedule Trigger_properties_Master CSP Dataverse Pipeline_parameters_ForceFullDatasetRefresh": {
+			"value": false
+		},
+		"CSS Intermodal Container Trigger_properties_Intermodal Potential Containers To Deliver Dataverse Pipeline_parameters_ForceFullDatasetRefresh": {
+			"value": false
+		},
+		"CSS Potential Container Trigger_properties_Potential Container To Sell Dataverse Pipeline_parameters_ForceFullDatasetRefresh": {
+			"value": false
+		},
+		"CSS Potential Container Trigger_properties_Potential Container To Sell Dataverse Pipeline_parameters_ForceUIInputOverride": {
+			"value": false
+		},
+		"DMRL Main Schedule Trigger_properties_DMRL Master Pipeline_parameters_ForceDatasetRefresh": {
+			"value": false
+		},
+		"dataFactory_properties_globalParameters_EnvironmentType_value": {
+			"value": "dev"
+		},
+		"dataFactory_location": {
+			"value": "westeurope"
+		},
+		"dataFactory_identity_type": {
+			"value": "SystemAssigned"
+		}
+	}
+}

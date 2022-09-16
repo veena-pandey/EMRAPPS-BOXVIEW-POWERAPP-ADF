@@ -1,0 +1,26 @@
+{
+	"name": "boxview_etl_CSS_ContainerToSell_BreakEvenPrice_Stage",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "boxview_asql",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ASQL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "Name",
+				"type": "decimal",
+				"precision": 38,
+				"scale": 6
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "CSS_ContainerToSell_BreakEvenPrice_Stage"
+		}
+	}
+}

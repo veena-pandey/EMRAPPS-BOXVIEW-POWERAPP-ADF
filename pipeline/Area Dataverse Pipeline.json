@@ -1,0 +1,851 @@
+{
+	"name": "Area Dataverse Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Data transformation flow",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Copy Country Data From ADX To Staging Blob",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "Load Area Data To Blob",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "Delete Staging Data folder from blob",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_country_staging_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Copy Country Data From ADX To Staging Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete Staging Data folder from blob",
+						"dependencyConditions": [
+							"Completed"
+						]
+					},
+					{
+						"activity": "Delete Intermediate Folder",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureDataExplorerSource",
+						"query": "country",
+						"queryTimeout": "00:10:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "short",
+									"type": "String"
+								},
+								"sink": {
+									"name": "short",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "country",
+									"type": "String"
+								},
+								"sink": {
+									"name": "country",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "area",
+									"type": "String"
+								},
+								"sink": {
+									"name": "area",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "team",
+									"type": "String"
+								},
+								"sink": {
+									"name": "team",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "team_name",
+									"type": "String"
+								},
+								"sink": {
+									"name": "team_name",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "regional_manager_dry",
+									"type": "String"
+								},
+								"sink": {
+									"name": "regional_manager_dry",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "regional_manager_reefer",
+									"type": "String"
+								},
+								"sink": {
+									"name": "regional_manager_reefer",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_manager_dry",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sales_manager_dry",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_manager_reefer",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sales_manager_reefer",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "customer_service",
+									"type": "String"
+								},
+								"sink": {
+									"name": "customer_service",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_operations",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sales_operations",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_manager_backup",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sales_manager_backup",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "allowed_for_sale",
+									"type": "String"
+								},
+								"sink": {
+									"name": "allowed_for_sale",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "currency",
+									"type": "String"
+								},
+								"sink": {
+									"name": "currency",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "nationalisation",
+									"type": "String"
+								},
+								"sink": {
+									"name": "nationalisation",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "tax_and_legal_approval",
+									"type": "String"
+								},
+								"sink": {
+									"name": "tax_and_legal_approval",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "custom_clearance",
+									"type": "String"
+								},
+								"sink": {
+									"name": "custom_clearance",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "custom_documentation_required_before_or_after_releasing_equipment",
+									"type": "String"
+								},
+								"sink": {
+									"name": "custom_documentation_required_before_or_after_releasing_equipment",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "bilateral_sales",
+									"type": "String"
+								},
+								"sink": {
+									"name": "bilateral_sales",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "bilateral_gst_vat",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "bilateral_gst_vat",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "local_vat_gst_amount",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "local_vat_gst_amount",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "local_agency_billing",
+									"type": "String"
+								},
+								"sink": {
+									"name": "local_agency_billing",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "agency_sales_agreement",
+									"type": "String"
+								},
+								"sink": {
+									"name": "agency_sales_agreement",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "release_free_time",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "release_free_time",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "cash_payment_waiting_time",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "cash_payment_waiting_time",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "discount_limit_dry",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "discount_limit_dry",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "discount_limit_reefer",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "discount_limit_reefer",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_terms",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sales_terms",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sales_notice",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sales_notice",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "loc",
+									"type": "String"
+								},
+								"sink": {
+									"name": "loc",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cancellation_fee_per_unit",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "cancellation_fee_per_unit",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "handling_charges_per_unit",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "handling_charges_per_unit",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "load_port_to_display",
+									"type": "String"
+								},
+								"sink": {
+									"name": "load_port_to_display",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "discharge_port_to_display",
+									"type": "String"
+								},
+								"sink": {
+									"name": "discharge_port_to_display",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_general",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invoice_header_general",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_billoflading",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invoice_header_billoflading",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_manufacturedby",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invoice_header_manufacturedby",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_incoterm",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invoice_header_incoterm",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_getflevy",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "invoice_header_getflevy",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_nhilevy",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "invoice_header_nhilevy",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_portofloading",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invoice_header_portofloading",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_hfm",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invoice_header_hfm",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_hfmics",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invoice_header_hfmics",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_header_hfmpayer",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invoice_header_hfmpayer",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invoice_address_abn_gst_taxid",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invoice_address_abn_gst_taxid",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "banking_details",
+									"type": "String"
+								},
+								"sink": {
+									"name": "banking_details",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "scv_code_agency",
+									"type": "String"
+								},
+								"sink": {
+									"name": "scv_code_agency",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AzureDataExplorer_Country",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_country_staging_data",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Area data to Dataverse",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Data transformation flow",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "area",
+							"wildcardFileName": "*.snappy.parquet",
+							"enablePartitionDiscovery": false
+						}
+					},
+					"sink": {
+						"type": "DynamicsSink",
+						"writeBatchSize": 10,
+						"writeBehavior": "upsert",
+						"ignoreNullValues": false,
+						"alternateKeyName": "maersk_areanamekey"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "maersk_areacode",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_areacode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_name",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_name",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "maersk_region",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "maersk_region",
+									"type": "Guid"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Blob_area_intermediate_data",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "boxview_Area",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Delete Intermediate Folder",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "Blob_area_intermediate_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Delete exported Area data",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "Copy Area data to Dataverse",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "blob_area_exported_data",
+						"type": "DatasetReference"
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Copy data from Area Dataverse to Blob",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Delete exported Area data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DynamicsSource",
+						"query": "<fetch>\n  <entity name=\"maersk_area\" >\n    <attribute name=\"maersk_areacode\" />\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_region\" />\n  </entity>\n</fetch>"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "boxview_Area",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blob_area_exported_data",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "CSP"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-05-03T13:56:25Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

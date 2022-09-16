@@ -1,0 +1,19 @@
+{
+	"name": "boxview_Product_Type",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "BoxView_Dataverse",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Dataverse"
+		},
+		"annotations": [],
+		"type": "DynamicsEntity",
+		"schema": [],
+		"typeProperties": {
+			"entityName": "maersk_producttype"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

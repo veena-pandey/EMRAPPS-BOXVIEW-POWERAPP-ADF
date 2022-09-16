@@ -1,0 +1,19 @@
+{
+	"name": "boxview_Country",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "BoxView_Dataverse",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Dataverse"
+		},
+		"annotations": [],
+		"type": "DynamicsEntity",
+		"schema": [],
+		"typeProperties": {
+			"entityName": "maersk_country"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

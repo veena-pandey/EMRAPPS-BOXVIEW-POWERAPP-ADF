@@ -1,0 +1,67 @@
+{
+	"name": "Load Account Data To Blob",
+	"properties": {
+		"folder": {
+			"name": "CSP"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "blob_customer_staging_data",
+						"type": "DatasetReference"
+					},
+					"name": "StagingBlobCustomerCustomer"
+				},
+				{
+					"dataset": {
+						"referenceName": "blob_user_exported_data",
+						"type": "DatasetReference"
+					},
+					"name": "userdatafromblob"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "blob_customer_intermediate_data",
+						"type": "DatasetReference"
+					},
+					"name": "IntermediateBlobCustomer",
+					"description": "Export data to blob_customer_data"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DataTransformation"
+				},
+				{
+					"name": "LookupSalesManagerDryColumn"
+				},
+				{
+					"name": "SelectSalesManagerDry"
+				},
+				{
+					"name": "LookupSalesManagerReefer"
+				},
+				{
+					"name": "SelectSalesManagerRefer"
+				},
+				{
+					"name": "LookupCustomerService"
+				},
+				{
+					"name": "SelectCustomerService"
+				},
+				{
+					"name": "LookupSalesOperations"
+				},
+				{
+					"name": "SelectSalesOperations"
+				}
+			],
+			"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['customer']) ~> StagingBlobCustomerCustomer\nsource(output(\n\t\tqueueid as string,\n\t\tsystemuserid as string,\n\t\tinternalemailaddress as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['systemuser/user.parquet']) ~> userdatafromblob\nStagingBlobCustomerCustomer derive(end_buyer_name = trim(toString(byName('end_buyer_name'))),\n\t\tscv_code = trim(toString(byName('scv_code'))),\n\t\tcustomer_name = trim(toString(byName('customer_name'))),\n\t\tcustomer_address = trim(toString(byName('customer_address'))),\n\t\tcustomer_postal_code = trim(toString(byName('customer_postal_code'))),\n\t\tcustomer_country = trim(toString(byName('customer_country'))),\n\t\tcustomer_email = trim(toString(byName('customer_email'))),\n\t\tcustomer_phone_number = trim(toString(byName('customer_phone_number'))),\n\t\tcustomer_vat_number = trim(toString(byName('customer_vat_number'))),\n\t\tpayment_terms_credit_days = toInteger(byName('payment_terms_credit_days')),\n\t\tpayment_terms_credit_text = trim(toString(byName('payment_terms_credit_text'))),\n\t\tCredit_Limit = toInteger(byName('Credit_Limit')),\n\t\tRelease_Free_Time = toInteger(byName('Release_Free_Time')),\n\t\tWeb_Shop_ID = trim(toString(byName('Web_Shop_ID'))),\n\t\tsales_manager_dry = trim(toString(byName('sales_manager_dry'))),\n\t\tsales_manager_reefer = trim(toString(byName('sales_manager_reefer'))),\n\t\tcustomer_service = trim(toString(byName('customer_service'))),\n\t\tsales_operations = trim(toString(byName('sales_operations'))),\n\t\treseller_certificate = toBoolean(case(upper(trim(toString(byName('reseller_certificate'))))=='Y',\"1\",\"0\")),\n\t\tcustomer_status = trim(toString(byName('customer_status'))),\n\t\tcustomer_segment = trim(toString(byName('customer_segment'))),\n\t\ttier = trim(toString(byName('tier'))),\n\t\tdepot_customer = toBoolean(case(upper(trim(toString(byName('depot_customer'))))=='Y',\"1\",\"0\")),\n\t\tdepot_site_code = trim(toString(byName('depot_site_code')))) ~> DataTransformation\nDataTransformation, userdatafromblob lookup(sales_manager_dry == internalemailaddress,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupSalesManagerDryColumn\nLookupSalesManagerDryColumn select(mapColumn(\n\t\tend_buyer_name,\n\t\tscv_code,\n\t\tcustomer_name,\n\t\tcustomer_address,\n\t\tcustomer_postal_code,\n\t\tcustomer_country,\n\t\tcustomer_email,\n\t\tcustomer_phone_number,\n\t\tcustomer_vat_number,\n\t\tpayment_terms_credit_days,\n\t\tpayment_terms_credit_text,\n\t\tCredit_Limit,\n\t\tRelease_Free_Time,\n\t\tWeb_Shop_ID,\n\t\tsales_manager_reefer,\n\t\tcustomer_service,\n\t\tsales_operations,\n\t\treseller_certificate,\n\t\tcustomer_status,\n\t\tcustomer_segment,\n\t\ttier,\n\t\tdepot_customer,\n\t\tdepot_site_code,\n\t\tsales_manager_dry = systemuserid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectSalesManagerDry\nSelectSalesManagerDry, userdatafromblob lookup(sales_manager_reefer == internalemailaddress,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupSalesManagerReefer\nLookupSalesManagerReefer select(mapColumn(\n\t\tend_buyer_name,\n\t\tscv_code,\n\t\tcustomer_name,\n\t\tcustomer_address,\n\t\tcustomer_postal_code,\n\t\tcustomer_country,\n\t\tcustomer_email,\n\t\tcustomer_phone_number,\n\t\tcustomer_vat_number,\n\t\tpayment_terms_credit_days,\n\t\tpayment_terms_credit_text,\n\t\tCredit_Limit,\n\t\tRelease_Free_Time,\n\t\tWeb_Shop_ID,\n\t\tcustomer_service,\n\t\tsales_operations,\n\t\treseller_certificate,\n\t\tcustomer_status,\n\t\tcustomer_segment,\n\t\ttier,\n\t\tdepot_customer,\n\t\tdepot_site_code,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer = systemuserid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectSalesManagerRefer\nSelectSalesManagerRefer, userdatafromblob lookup(customer_service == internalemailaddress,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCustomerService\nLookupCustomerService select(mapColumn(\n\t\tend_buyer_name,\n\t\tscv_code,\n\t\tcustomer_name,\n\t\tcustomer_address,\n\t\tcustomer_postal_code,\n\t\tcustomer_country,\n\t\tcustomer_email,\n\t\tcustomer_phone_number,\n\t\tcustomer_vat_number,\n\t\tpayment_terms_credit_days,\n\t\tpayment_terms_credit_text,\n\t\tCredit_Limit,\n\t\tRelease_Free_Time,\n\t\tWeb_Shop_ID,\n\t\tsales_operations,\n\t\treseller_certificate,\n\t\tcustomer_status,\n\t\tcustomer_segment,\n\t\ttier,\n\t\tdepot_customer,\n\t\tdepot_site_code,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tcustomer_service = systemuserid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCustomerService\nSelectCustomerService, userdatafromblob lookup(sales_operations == internalemailaddress,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupSalesOperations\nLookupSalesOperations select(mapColumn(\n\t\tend_buyer_name,\n\t\tscv_code,\n\t\tcustomer_name,\n\t\tcustomer_address,\n\t\tcustomer_postal_code,\n\t\tcustomer_country,\n\t\tcustomer_email,\n\t\tcustomer_phone_number,\n\t\tcustomer_vat_number,\n\t\tpayment_terms_credit_days,\n\t\tpayment_terms_credit_text,\n\t\tCredit_Limit,\n\t\tRelease_Free_Time,\n\t\tWeb_Shop_ID,\n\t\treseller_certificate,\n\t\tcustomer_status,\n\t\tcustomer_segment,\n\t\ttier,\n\t\tdepot_customer,\n\t\tdepot_site_code,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tcustomer_service,\n\t\tsales_operations = systemuserid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectSalesOperations\nSelectSalesOperations sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobCustomer"
+		}
+	}
+}

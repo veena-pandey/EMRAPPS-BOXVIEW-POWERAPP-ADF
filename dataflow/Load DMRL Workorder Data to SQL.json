@@ -1,0 +1,77 @@
+{
+	"name": "Load DMRL Workorder Data to SQL",
+	"properties": {
+		"folder": {
+			"name": "DMRL"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "blob_DMRLWorkorder_staging_data",
+						"type": "DatasetReference"
+					},
+					"name": "StagingBlobDMRLWorkorderSnapshot"
+				},
+				{
+					"dataset": {
+						"referenceName": "blob_DMRLContainer_exported_data",
+						"type": "DatasetReference"
+					},
+					"name": "dmrlcontainerdatafromblob"
+				},
+				{
+					"linkedService": {
+						"referenceName": "boxview_asql",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ASQLWorkorder"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "boxview_asql",
+						"type": "LinkedServiceReference"
+					},
+					"name": "destSQL"
+				},
+				{
+					"dataset": {
+						"referenceName": "blob_DMRLSQLWorkorderLog_Intermediate_data",
+						"type": "DatasetReference"
+					},
+					"name": "IntermediateBlobDMRLWOLog"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DataTransformation"
+				},
+				{
+					"name": "LookupDMRLContainerId"
+				},
+				{
+					"name": "SelectDMRLContainerId"
+				},
+				{
+					"name": "IfWODoesNotExistsInADX"
+				},
+				{
+					"name": "ADXChecksum"
+				},
+				{
+					"name": "AlterToUpsert"
+				},
+				{
+					"name": "GetRecordsCount"
+				},
+				{
+					"name": "SetEntityTypeAsWO"
+				}
+			],
+			"script": "parameters{\n\tForceFullRefresh as boolean (false())\n}\nsource(output(\n\t\twork_order_id as string,\n\t\tcontainer_id as string,\n\t\tis_sales as boolean,\n\t\tis_surplus as boolean,\n\t\tequipment_size as string,\n\t\tlocation_id as string,\n\t\tlast_move_timestamp as timestamp,\n\t\tis_empty as boolean,\n\t\tlast_move as string,\n\t\tequipment_redelivery_status as boolean,\n\t\tadjusted_MRL as decimal(38,18),\n\t\tadjusted_MRL_box as decimal(38,18),\n\t\ttotal_cost_with_maersk_parts_usd as double,\n\t\ttotal_price_not_covered_by_warranty as double,\n\t\ttotal_cost_under_warranty as double,\n\t\texpiry_date as string,\n\t\tshould_repair as boolean,\n\t\treasoning_for_rejection as string,\n\t\twork_order_created_date as timestamp,\n\t\turgent as boolean,\n\t\tshop_id as string,\n\t\tcluster_id as string,\n\t\twolocation_id as string,\n\t\ttotal_cost_usd as double,\n\t\tstatus_description as string,\n\t\twork_order_id1 as string,\n\t\twould_repair_after_change as boolean,\n\t\twould_repair_before_change as boolean,\n\t\tapproved_by as string,\n\t\tover_mrl as boolean\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlworkorder']) ~> StagingBlobDMRLWorkorderSnapshot\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_dmrlcontainerid as string,\n\t\tmaersk_equipmentreefertype as string,\n\t\tmaersk_equipmentmanufacturer as string,\n\t\tmaersk_profile as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['dmrlcontainer']) ~> dmrlcontainerdatafromblob\nsource(output(\n\t\twork_order_id as string,\n\t\tchecksum as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'query',\n\tstore: 'sqlserver',\n\tquery: 'SELECT  work_order_id, checksum\\nFROM dbo.DMRL_Workorder',\n\tisolationLevel: 'READ_UNCOMMITTED') ~> ASQLWorkorder\nStagingBlobDMRLWorkorderSnapshot derive(work_order_id = trim(toString(byName('work_order_id'))),\n\t\tcontainer_id = trim(toString(byName('container_id'))),\n\t\tis_sales = byName('is_sales'),\n\t\tis_surplus = byName('is_surplus'),\n\t\tequipment_size = case(toInteger(byName('equipment_size'))==20,379430000,\r\n    case(toInteger(byName('equipment_size'))==40,379430001,\r\n        case(toInteger(byName('equipment_size'))==45,379430002))),\n\t\twolocation_id = trim(toString(byName('location_id'))),\n\t\tlast_move_timestamp = toTimestamp(toString(byName('last_move_timestamp'))),\n\t\tis_empty = byName('is_empty'),\n\t\tlast_move = case(trim(toString(byName('last_move')))=='GATE-IN',379430000,\r\n    case(trim(toString(byName('last_move')))=='GATE-OUT',379430001,\r\n        case(trim(toString(byName('last_move')))=='DISCHARG',379430002,\r\n            case(trim(toString(byName('last_move')))=='LOAD',379430003,\r\n                case(trim(toString(byName('last_move')))=='ON-RAIL',379430004,\r\n                    case(trim(toString(byName('last_move')))=='OFF-RAIL',379430005,\r\n                        case(trim(toString(byName('last_move')))=='STRIPPIN',379430006))))))),\n\t\tequipment_redelivery_status = byName('equipment_redelivery_status'),\n\t\tadjusted_MRL = toInteger(byName('adjusted_MRL')),\n\t\tadjusted_MRL_box = toInteger(byName('adjusted_MRL_box')),\n\t\ttotal_cost_with_maersk_parts_usd = toInteger(byName('total_cost_with_maersk_parts_usd')),\n\t\ttotal_price_not_covered_by_warranty = toInteger(byName('total_price_not_covered_by_warranty')),\n\t\ttotal_cost_under_warranty = toInteger(byName('total_cost_under_warranty')),\n\t\texpiry_date = toTimestamp(toString(byName('expiry_date')),'yyyy-mm-dd'),\n\t\tshould_repair = byName('should_repair'),\n\t\treasoning_for_rejection = trim(toString(byName('reasoning_for_rejection'))),\n\t\twork_order_created_date = toTimestamp(toString(byName('work_order_created_date'))),\n\t\turgent = byName('urgent'),\n\t\tshop_id = trim(toString(byName('shop_id'))),\n\t\tcluster_id = trim(toString(byName('cluster_id'))),\n\t\ttotal_cost_usd = toFloat(byName('total_cost_usd')),\n\t\tstatus_description = trim(toString(byName('status_description'))),\n\t\tover_mrl = byName('over_mrl'),\n\t\tapproved_by = trim(toString(byName('approved_by')))) ~> DataTransformation\nIfWODoesNotExistsInADX, dmrlcontainerdatafromblob lookup(container_id == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupDMRLContainerId\nLookupDMRLContainerId select(mapColumn(\n\t\twork_order_id,\n\t\tcontainer_id = maersk_dmrlcontainerid,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlast_move_timestamp,\n\t\tis_empty,\n\t\tlast_move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\tshould_repair,\n\t\treasoning_for_rejection,\n\t\twork_order_created_date,\n\t\turgent,\n\t\tshop_id,\n\t\tcluster_id,\n\t\twolocation_id,\n\t\ttotal_cost_usd,\n\t\tstatus_description,\n\t\tchecksum = adxchecksum,\n\t\tover_mrl,\n\t\tEquipmentManufacturer = maersk_equipmentmanufacturer,\n\t\tprofile = maersk_profile,\n\t\tequipment_reefer_type = maersk_equipmentreefertype,\n\t\tapproved_by\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectDMRLContainerId\nADXChecksum, ASQLWorkorder exists(adxchecksum == checksum\n\t&& DataTransformation@work_order_id == ASQLWorkorder@work_order_id,\n\tnegate:true,\n\tbroadcast: 'auto')~> IfWODoesNotExistsInADX\nDataTransformation derive(adxchecksum = sha1(work_order_id,status_description,over_mrl,container_id,is_sales,is_surplus,equipment_size,last_move_timestamp,is_empty,last_move,equipment_redelivery_status,adjusted_MRL,adjusted_MRL_box,total_cost_with_maersk_parts_usd,total_price_not_covered_by_warranty,total_cost_under_warranty,expiry_date,should_repair,reasoning_for_rejection,work_order_created_date,urgent,shop_id,cluster_id, wolocation_id,total_cost_usd,approved_by)) ~> ADXChecksum\nSelectDMRLContainerId alterRow(upsertIf(true())) ~> AlterToUpsert\nADXChecksum aggregate(ADXRecordsCount = count()) ~> GetRecordsCount\nGetRecordsCount derive(maersk_entitytype = 379430001,\n\t\tmaersk_name = concat('WORefresh_', toString(currentUTC()))) ~> SetEntityTypeAsWO\nAlterToUpsert sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tWorkorderId as string,\n\t\tcontainer_id as string,\n\t\twork_order_id as string,\n\t\tchecksum as string,\n\t\tis_sales as boolean,\n\t\tis_surplus as boolean,\n\t\tequipment_size as integer,\n\t\tlast_move_timestamp as timestamp,\n\t\tis_empty as boolean,\n\t\tlast_move as integer,\n\t\tequipment_redelivery_status as boolean,\n\t\tadjusted_MRL as integer,\n\t\tadjusted_MRL_box as integer,\n\t\ttotal_cost_with_maersk_parts_usd as integer,\n\t\ttotal_price_not_covered_by_warranty as integer,\n\t\ttotal_cost_under_warranty as integer,\n\t\texpiry_date as timestamp,\n\t\tshould_repair as boolean,\n\t\treasoning_for_rejection as string,\n\t\turgent as boolean,\n\t\tshop_id as string,\n\t\tcluster_id as string,\n\t\twolocation_id as string,\n\t\ttotal_cost_usd as decimal(10,2),\n\t\tstatus_description as string,\n\t\twork_order_created_date as timestamp,\n\t\tover_mrl as boolean,\n\t\tequipment_reefer_type as string,\n\t\tEquipmentManufacturer as string,\n\t\tprofile as string,\n\t\tapproved_by as string\n\t),\n\tformat: 'table',\n\tstore: 'sqlserver',\n\tschemaName: 'dbo',\n\ttableName: 'DMRL_Workorder',\n\tinsertable: false,\n\tupdateable: false,\n\tdeletable: false,\n\tupsertable: true,\n\tkeys:['work_order_id'],\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\tsaveOrder: 0,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\twork_order_id,\n\t\tcontainer_id,\n\t\tchecksum,\n\t\tis_sales,\n\t\tis_surplus,\n\t\tequipment_size,\n\t\tlast_move_timestamp,\n\t\tis_empty,\n\t\tlast_move,\n\t\tequipment_redelivery_status,\n\t\tadjusted_MRL,\n\t\tadjusted_MRL_box,\n\t\ttotal_cost_with_maersk_parts_usd,\n\t\ttotal_price_not_covered_by_warranty,\n\t\ttotal_cost_under_warranty,\n\t\texpiry_date,\n\t\tshould_repair,\n\t\treasoning_for_rejection,\n\t\turgent,\n\t\tshop_id,\n\t\tcluster_id,\n\t\twolocation_id,\n\t\ttotal_cost_usd,\n\t\tstatus_description,\n\t\twork_order_created_date,\n\t\tover_mrl,\n\t\tequipment_reefer_type,\n\t\tEquipmentManufacturer,\n\t\tprofile,\n\t\tapproved_by\n\t)) ~> destSQL\nSetEntityTypeAsWO sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobDMRLWOLog"
+		}
+	}
+}

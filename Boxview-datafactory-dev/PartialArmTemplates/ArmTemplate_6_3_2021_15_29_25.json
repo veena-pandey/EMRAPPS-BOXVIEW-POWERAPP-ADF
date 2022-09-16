@@ -1,0 +1,869 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Pool Dataverse Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data transformation flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Copy Site Data From ADX To Staging Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Load Pool Data To Blob",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Delete Staging Data folder from blob",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_site_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Copy Site Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Data folder from blob",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "Delete Intermediate Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "site",
+								"queryTimeout": "00:10:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "loc_cd",
+											"type": "String"
+										},
+										"sink": {
+											"name": "loc_cd",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "site_type",
+											"type": "String"
+										},
+										"sink": {
+											"name": "site_type",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "loc_dsc",
+											"type": "String"
+										},
+										"sink": {
+											"name": "loc_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "country_cd",
+											"type": "String"
+										},
+										"sink": {
+											"name": "country_cd",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "country_dsc",
+											"type": "String"
+										},
+										"sink": {
+											"name": "country_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "city_cd",
+											"type": "String"
+										},
+										"sink": {
+											"name": "city_cd",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "city_dsc",
+											"type": "String"
+										},
+										"sink": {
+											"name": "city_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "cluster_cd",
+											"type": "String"
+										},
+										"sink": {
+											"name": "cluster_cd",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "cluster_dsc",
+											"type": "String"
+										},
+										"sink": {
+											"name": "cluster_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "region_cd",
+											"type": "String"
+										},
+										"sink": {
+											"name": "region_cd",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "region_dsc",
+											"type": "String"
+										},
+										"sink": {
+											"name": "region_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "pool_cd",
+											"type": "String"
+										},
+										"sink": {
+											"name": "pool_cd",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "pool_dsc",
+											"type": "String"
+										},
+										"sink": {
+											"name": "pool_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "lopsc_cd",
+											"type": "String"
+										},
+										"sink": {
+											"name": "lopsc_cd",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "lopsc_dsc",
+											"type": "String"
+										},
+										"sink": {
+											"name": "lopsc_dsc",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "lat",
+											"type": "Double"
+										},
+										"sink": {
+											"name": "lat",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										}
+									},
+									{
+										"source": {
+											"name": "lon",
+											"type": "Double"
+										},
+										"sink": {
+											"name": "lon",
+											"type": "Double",
+											"physicalType": "DOUBLE"
+										}
+									},
+									{
+										"source": {
+											"name": "email_address",
+											"type": "String"
+										},
+										"sink": {
+											"name": "email_address",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "phone",
+											"type": "String"
+										},
+										"sink": {
+											"name": "phone",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "contact_person",
+											"type": "String"
+										},
+										"sink": {
+											"name": "contact_person",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "address_1",
+											"type": "String"
+										},
+										"sink": {
+											"name": "address_1",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "address_2",
+											"type": "String"
+										},
+										"sink": {
+											"name": "address_2",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "address_3",
+											"type": "String"
+										},
+										"sink": {
+											"name": "address_3",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "postal_code",
+											"type": "String"
+										},
+										"sink": {
+											"name": "postal_code",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "city_name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "city_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "local_tax",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "local_tax",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "global_tax",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "global_tax",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "eu_tax",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "eu_tax",
+											"type": "Decimal",
+											"physicalType": "DECIMAL"
+										}
+									},
+									{
+										"source": {
+											"name": "state_province_name",
+											"type": "String"
+										},
+										"sink": {
+											"name": "state_province_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_dry",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_manager_dry",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_manager_reefer",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_manager_reefer",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "customer_service",
+											"type": "String"
+										},
+										"sink": {
+											"name": "customer_service",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "sales_operations",
+											"type": "String"
+										},
+										"sink": {
+											"name": "sales_operations",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_Site",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_site_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Copy Pool data to Dataverse",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data transformation flow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "pool",
+									"wildcardFileName": "*.snappy.parquet",
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DynamicsSink",
+								"writeBatchSize": 10,
+								"writeBehavior": "upsert",
+								"ignoreNullValues": false,
+								"alternateKeyName": "maersk_poolnamekey"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "maersk_poolcode",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_poolcode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "maersk_name",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "maersk_country",
+											"type": "String",
+											"physicalType": "UTF8"
+										},
+										"sink": {
+											"name": "maersk_country",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "maersk_pooldescription"
+										},
+										"sink": {
+											"name": "maersk_pooldescription"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "blob_pool_intermediate_data",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "boxview_Pool",
+								"type": "DatasetReference"
+							}
+						]
+					},
+					{
+						"name": "Delete Intermediate Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_pool_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Delete Exported Pool Data",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "Copy Pool data to Dataverse",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_pool_exported_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "Copy Pool data to Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Exported Pool Data",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DynamicsSource",
+								"query": "<fetch>\n  <entity name=\"maersk_pool\" >\n    <attribute name=\"maersk_name\" />\n    <attribute name=\"maersk_poolcode\" />\n    <attribute name=\"maersk_poolid\" />\n  </entity>\n</fetch>"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "boxview_Pool",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_pool_exported_data",
+								"type": "DatasetReference"
+							}
+						]
+					}
+				],
+				"folder": {
+					"name": "CSP"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-03T13:56:25Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/dataflows/Load Pool Data To Blob')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load Pool Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSP"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_site_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobSite"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_country_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "CountryBlob"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_pool_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobPool",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "SelectRequiredColumns"
+						},
+						{
+							"name": "SelectDistinctValues"
+						},
+						{
+							"name": "LookupCountry"
+						},
+						{
+							"name": "SelectCountry"
+						}
+					],
+					"script": "source(output(\n\t\tloc_cd as string,\n\t\tsite_type as string,\n\t\tloc_dsc as string,\n\t\tcountry_cd as string,\n\t\tcountry_dsc as string,\n\t\tcity_cd as string,\n\t\tcity_dsc as string,\n\t\tcluster_cd as string,\n\t\tcluster_dsc as string,\n\t\tregion_cd as string,\n\t\tregion_dsc as string,\n\t\tpool_cd as string,\n\t\tpool_dsc as string,\n\t\tlopsc_cd as string,\n\t\tlopsc_dsc as string,\n\t\tlat as double,\n\t\tlon as double,\n\t\temail_address as string,\n\t\tphone as string,\n\t\tcontact_person as string,\n\t\taddress_1 as string,\n\t\taddress_2 as string,\n\t\taddress_3 as string,\n\t\tpostal_code as string,\n\t\tcity_name as string,\n\t\tlocal_tax as decimal(38,18),\n\t\tglobal_tax as decimal(38,18),\n\t\teu_tax as decimal(38,18),\n\t\tstate_province_name as string,\n\t\tsales_manager_dry as string,\n\t\tsales_manager_reefer as string,\n\t\tcustomer_service as string,\n\t\tsales_operations as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> StagingBlobSite\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_countrycode as string,\n\t\tmaersk_countryid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['country/*.parquet']) ~> CountryBlob\nStagingBlobSite derive(pool_cd = trim(toString(byName('pool_cd'))),\n\t\tpool_dsc = trim(toString(byName('pool_dsc'))),\n\t\tcountry_dsc = trim(toString(byName('country_dsc')))) ~> DataTransformation\nDataTransformation select(mapColumn(\n\t\tmaersk_poolcode = pool_cd,\n\t\tmaersk_name = pool_dsc,\n\t\tmaersk_country = country_dsc\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> SelectRequiredColumns\nSelectCountry aggregate(groupBy(maersk_name),\n\teach(match(name!='maersk_name'), $$ = first($$))) ~> SelectDistinctValues\nSelectRequiredColumns, CountryBlob lookup(upper(maersk_country) == upper(CountryBlob@maersk_name),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCountry\nLookupCountry select(mapColumn(\n\t\tmaersk_poolcode,\n\t\tmaersk_name = SelectRequiredColumns@maersk_name,\n\t\tmaersk_country = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCountry\nSelectDistinctValues sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tmapColumn(\n\t\tmaersk_pooldescription = maersk_name,\n\t\tmaersk_name = maersk_poolcode,\n\t\tmaersk_country,\n\t\tmaersk_poolcode\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobPool"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load Site Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSP"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_site_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobSite"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_country_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "countrydatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_pool_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "pooldatafromblob"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_city_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "citydatafromdataverse"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobSite",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "LookupCountry"
+						},
+						{
+							"name": "SelectCountry"
+						},
+						{
+							"name": "LookupPool"
+						},
+						{
+							"name": "SelectPool"
+						},
+						{
+							"name": "Lookupcity"
+						},
+						{
+							"name": "SelectCity"
+						},
+						{
+							"name": "DerivedColumn1"
+						}
+					],
+					"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp']) ~> StagingBlobSite\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_countrycode as string,\n\t\tmaersk_countryid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['country/*.parquet']) ~> countrydatafromblob\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_poolid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['pool/*.parquet']) ~> pooldatafromblob\nsource(output(\n\t\tmaersk_cityid as string,\n\t\tmaersk_name as string,\n\t\tmaersk_citycode as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['city/*.parquet']) ~> citydatafromdataverse\nStagingBlobSite derive(loc_cd = trim(toString(byName('loc_cd'))),\n\t\tsite_type = trim(toString(byName('site_type'))),\n\t\tloc_dsc = trim(toString(byName('loc_dsc'))),\n\t\tcountry_cd = trim(toString(byName('country_cd'))),\n\t\tcountry_dsc = trim(toString(byName('country_dsc'))),\n\t\tcity_cd = trim(toString(byName('city_cd'))),\n\t\tcity_dsc = trim(toString(byName('city_dsc'))),\n\t\tcluster_cd = trim(toString(byName('cluster_cd'))),\n\t\tcluster_dsc = trim(toString(byName('cluster_dsc'))),\n\t\tregion_cd = trim(toString(byName('region_cd'))),\n\t\tregion_dsc = trim(toString(byName('region_dsc'))),\n\t\tpool_cd = trim(toString(byName('pool_cd'))),\n\t\tpool_dsc = trim(toString(byName('pool_dsc'))),\n\t\tlopsc_cd = trim(toString(byName('lopsc_cd'))),\n\t\tlopsc_dsc = trim(toString(byName('lopsc_dsc'))),\n\t\tlat = trim(toString(byName('lat'))),\n\t\tlon = trim(toString(byName('lon'))),\n\t\temail_address = trim(toString(byName('email_address'))),\n\t\tphone = trim(toString(byName('phone'))),\n\t\tcontact_person = trim(toString(byName('contact_person'))),\n\t\taddress_1 = trim(toString(byName('address_1'))),\n\t\taddress_2 = trim(toString(byName('address_2'))),\n\t\taddress_3 = trim(toString(byName('address_3'))),\n\t\tpostal_code = trim(toString(byName('postal_code'))),\n\t\tcity_name = trim(toString(byName('city_name'))),\n\t\tlocal_tax = trim(toString(byName('local_tax'))),\n\t\tglobal_tax = trim(toString(byName('global_tax'))),\n\t\teu_tax = trim(toString(byName('eu_tax'))),\n\t\tstate_province_name = trim(toString(byName('state_province_name'))),\n\t\tsales_manager_dry = trim(toString(byName('sales_manager_dry'))),\n\t\tsales_manager_reefer = trim(toString(byName('sales_manager_reefer'))),\n\t\tcustomer_service = trim(toString(byName('customer_service'))),\n\t\tsales_operations = trim(toString(byName('sales_operations')))) ~> DataTransformation\nSelectCity, countrydatafromblob lookup(upper(country_dsc) == upper(maersk_name),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupCountry\nLookupCountry select(mapColumn(\n\t\tloc_cd,\n\t\tsite_type,\n\t\tloc_dsc,\n\t\tcountry_cd,\n\t\tcity_cd,\n\t\tcity_dsc,\n\t\tcluster_cd,\n\t\tcluster_dsc,\n\t\tregion_cd,\n\t\tregion_dsc,\n\t\tpool_cd,\n\t\tpool_dsc,\n\t\tlopsc_cd,\n\t\tlopsc_dsc,\n\t\tlat,\n\t\tlon,\n\t\tcity_name,\n\t\tstate_province_name,\n\t\tcountry_dsc = maersk_countryid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCountry\nSelectCountry, pooldatafromblob lookup(upper(pool_dsc) == upper(maersk_name),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupPool\nLookupPool select(mapColumn(\n\t\tloc_cd,\n\t\tsite_type,\n\t\tloc_dsc,\n\t\tlat,\n\t\tlon,\n\t\tcountry_dsc,\n\t\tpool_dsc = maersk_poolid,\n\t\tmaersk_city = city_cd\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectPool\nDataTransformation, citydatafromdataverse lookup(upper(city_dsc) == upper(maersk_name),\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> Lookupcity\nLookupcity select(mapColumn(\n\t\tloc_cd,\n\t\tsite_type,\n\t\tloc_dsc,\n\t\tcountry_cd,\n\t\tcountry_dsc,\n\t\tcity_cd = maersk_cityid,\n\t\tcity_dsc,\n\t\tcluster_cd,\n\t\tcluster_dsc,\n\t\tregion_cd,\n\t\tregion_dsc,\n\t\tpool_cd,\n\t\tpool_dsc,\n\t\tlopsc_cd,\n\t\tlopsc_dsc,\n\t\tlat,\n\t\tlon,\n\t\temail_address,\n\t\tphone,\n\t\tcontact_person,\n\t\taddress_1,\n\t\taddress_2,\n\t\taddress_3,\n\t\tpostal_code,\n\t\tcity_name,\n\t\tlocal_tax,\n\t\tglobal_tax,\n\t\teu_tax,\n\t\tstate_province_name,\n\t\tsales_manager_dry,\n\t\tsales_manager_reefer,\n\t\tcustomer_service,\n\t\tsales_operations\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCity\nSelectPool derive(site_code = trim(toString(byName('loc_cd')))) ~> DerivedColumn1\nDerivedColumn1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobSite"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

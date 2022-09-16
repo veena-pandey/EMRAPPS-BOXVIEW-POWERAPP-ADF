@@ -1,0 +1,62 @@
+{
+	"name": "Load Product Index Data To Blob",
+	"properties": {
+		"folder": {
+			"name": "CSP"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "blob_product_index_staging_data",
+						"type": "DatasetReference"
+					},
+					"name": "StagingBlobProductIndex"
+				},
+				{
+					"dataset": {
+						"referenceName": "blob_product_type_exported_data",
+						"type": "DatasetReference"
+					},
+					"name": "producttypedatafromblob"
+				},
+				{
+					"dataset": {
+						"referenceName": "blob_product_subtype_exported_data",
+						"type": "DatasetReference"
+					},
+					"name": "productsubtypedatafromblob"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "blob_product_index_intermediate_data",
+						"type": "DatasetReference"
+					},
+					"name": "IntermediateBlobProductIndex",
+					"description": "Export data to blob_customer_data"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DataTransformation"
+				},
+				{
+					"name": "LookupProductType"
+				},
+				{
+					"name": "SelectProductType"
+				},
+				{
+					"name": "LookupProductSubType"
+				},
+				{
+					"name": "SelectProductSubType"
+				}
+			],
+			"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['productindex']) ~> StagingBlobProductIndex\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_producttypeid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['producttype/*.parquet']) ~> producttypedatafromblob\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_productsubtypeid as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['productsubtype/*.parquet']) ~> productsubtypedatafromblob\nStagingBlobProductIndex derive(product_index = trim(toString(byName('product_index'))),\n\t\tproduct_group = trim(toString(byName('product_group'))),\n\t\tprevious_category = trim(toString(byName('previous_category'))),\n\t\tcategory = trim(toString(byName('category'))),\n\t\tsize = toInteger(case(trim(toString(byName('size')))=='20','379430000',\r\ncase(trim(toString(byName('size')))=='40','379430001',\r\ncase(trim(toString(byName('size')))=='45','379430002')))),\n\t\tproduct_type = trim(toString(byName('product_type'))),\n\t\tproduct_type_name = trim(toString(byName('product_type_name'))),\n\t\tsubtype = trim(toString(byName('subtype'))),\n\t\tsubtype_name = trim(toString(byName('subtype_name'))),\n\t\tsearch_name = trim(toString(byName('search_name'))),\n\t\topen_for_sale = toBoolean(case(upper(trim(toString(byName('open_for_sale'))))=='Y',\"1\",\"0\")),\n\t\tignore_breakeven = toBoolean(case(upper(trim(toString(byName('ignore_breakeven'))))=='Y',\"1\",\"0\")),\n\t\tprice_product_type = trim(toString(byName('price_product_type'))),\n\t\tprice_category = trim(toString(byName('price_category'))),\n\t\tkey_from_inventory = trim(toString(byName('key_from_inventory')))) ~> DataTransformation\nDataTransformation, producttypedatafromblob lookup(product_type == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupProductType\nLookupProductType select(mapColumn(\n\t\tproduct_index,\n\t\tproduct_group,\n\t\tprevious_category,\n\t\tcategory,\n\t\tsize,\n\t\tproduct_type_name,\n\t\tsubtype,\n\t\tsubtype_name,\n\t\tsearch_name,\n\t\topen_for_sale,\n\t\tignore_breakeven,\n\t\tprice_product_type,\n\t\tprice_category,\n\t\tkey_from_inventory,\n\t\tproduct_type = maersk_producttypeid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectProductType\nSelectProductType, productsubtypedatafromblob lookup(subtype == maersk_name,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupProductSubType\nLookupProductSubType select(mapColumn(\n\t\tproduct_index,\n\t\tproduct_group,\n\t\tprevious_category,\n\t\tcategory,\n\t\tsize,\n\t\tproduct_type_name,\n\t\tsubtype_name,\n\t\tsearch_name,\n\t\topen_for_sale,\n\t\tignore_breakeven,\n\t\tprice_product_type,\n\t\tprice_category,\n\t\tkey_from_inventory,\n\t\tproduct_type,\n\t\tsubtype = maersk_productsubtypeid\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectProductSubType\nSelectProductSubType sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobProductIndex"
+		}
+	}
+}

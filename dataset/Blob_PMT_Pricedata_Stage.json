@@ -1,0 +1,49 @@
+{
+	"name": "Blob_PMT_Pricedata_Stage",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "PMT"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "pmt_pricedata",
+				"container": "stagingdata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "name",
+				"type": "UTF8"
+			},
+			{
+				"name": "email",
+				"type": "UTF8"
+			},
+			{
+				"name": "webshop_role",
+				"type": "UTF8"
+			},
+			{
+				"name": "maestro_role",
+				"type": "UTF8"
+			},
+			{
+				"name": "cell_phone",
+				"type": "UTF8"
+			},
+			{
+				"name": "work_phone",
+				"type": "UTF8"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

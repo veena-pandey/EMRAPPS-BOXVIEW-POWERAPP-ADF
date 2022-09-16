@@ -1,0 +1,37 @@
+{
+	"name": "blob_DMRLContainer_exported_data",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "DMRL/Export"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "dmrlcontainer",
+				"container": "exporteddata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "maersk_dmrlcontainerid",
+				"type": "UTF8"
+			},
+			{
+				"name": "maersk_name",
+				"type": "UTF8"
+			},
+			{
+				"name": "maersk_datahash",
+				"type": "UTF8"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

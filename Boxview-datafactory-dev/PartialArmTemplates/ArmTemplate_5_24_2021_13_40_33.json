@@ -1,0 +1,246 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DMRL Workorder dataverse Pipeline_rework')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Delete Staging Folder",
+						"type": "Delete",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "blob_DMRLWorkorder_staging_data",
+								"type": "DatasetReference"
+							},
+							"enableLogging": false,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "DMRLWorkorder_Snapshot Data From ADX To Staging Blob",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Delete Staging Folder",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureDataExplorerSource",
+								"query": "work_order_mrl_hubble_snapshot | join kind=leftouter (work_order | project shop_id, wolocation_id = location_id,cluster_id,work_order_id,total_cost_usd) on work_order_id  | project work_order_id,container_id,is_sales,is_surplus,equipment_size,location_id,last_move_timestamp,is_empty,last_move,equipment_redelivery_status,adjusted_MRL,adjusted_MRL_box,total_cost_with_maersk_parts_usd,total_price_not_covered_by_warranty,total_cost_under_warranty,expiry_date,should_repair,reasoning_for_rejection,work_order_created_date,urgent,shop_id,cluster_id, wolocation_id,total_cost_usd",
+								"queryTimeout": "00:50:00",
+								"noTruncation": false
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"maxConcurrentConnections": 8
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 1000000
+								}
+							},
+							"enableStaging": false,
+							"parallelCopies": 4,
+							"dataIntegrationUnits": 4,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "AzureDataExplorer_Workorder_hubblesnapshot",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "blob_DMRLWorkorder_staging_data",
+								"type": "DatasetReference"
+							}
+						]
+					}
+				],
+				"folder": {
+					"name": "DMRL"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-05-07T05:50:19Z"
+			},
+			"dependsOn": [
+				"[variables('factoryId')]",
+				"[concat(variables('factoryId'), '/datasets/blob_DMRLWorkorder_staging_data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/blob_DMRLWorkorder_staging_data')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "DMRL/Staging"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "dmrlworkorder",
+						"container": "stagingdata"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": [
+					{
+						"name": "work_order_id",
+						"type": "UTF8"
+					},
+					{
+						"name": "container_type",
+						"type": "UTF8"
+					},
+					{
+						"name": "location_id",
+						"type": "UTF8"
+					},
+					{
+						"name": "equipment_size",
+						"type": "UTF8"
+					},
+					{
+						"name": "production_year",
+						"type": "UTF8"
+					},
+					{
+						"name": "container_id",
+						"type": "UTF8"
+					},
+					{
+						"name": "equipment_manufacturer",
+						"type": "UTF8"
+					},
+					{
+						"name": "is_sales",
+						"type": "BOOLEAN"
+					},
+					{
+						"name": "is_surplus",
+						"type": "BOOLEAN"
+					},
+					{
+						"name": "last_move_timestamp",
+						"type": "INT96"
+					},
+					{
+						"name": "is_empty",
+						"type": "BOOLEAN"
+					},
+					{
+						"name": "last_move",
+						"type": "UTF8"
+					},
+					{
+						"name": "equipment_redelivery_status",
+						"type": "BOOLEAN"
+					},
+					{
+						"name": "adjusted_MRL",
+						"type": "DECIMAL",
+						"precision": 38,
+						"scale": 18
+					},
+					{
+						"name": "adjusted_MRL_box",
+						"type": "DECIMAL",
+						"precision": 38,
+						"scale": 18
+					},
+					{
+						"name": "total_cost_with_maersk_parts_usd",
+						"type": "DOUBLE"
+					},
+					{
+						"name": "expiry_date",
+						"type": "UTF8"
+					},
+					{
+						"name": "total_price_not_covered_by_warranty",
+						"type": "DOUBLE"
+					},
+					{
+						"name": "should_repair",
+						"type": "BOOLEAN"
+					},
+					{
+						"name": "reasoning_for_rejection",
+						"type": "UTF8"
+					},
+					{
+						"name": "work_order_created_date",
+						"type": "INT96"
+					},
+					{
+						"name": "total_cost_under_warranty",
+						"type": "DOUBLE"
+					},
+					{
+						"name": "urgent",
+						"type": "BOOLEAN"
+					}
+				]
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}

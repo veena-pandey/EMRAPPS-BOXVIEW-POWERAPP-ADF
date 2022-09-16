@@ -1,0 +1,86 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Boxview-datafactory-dev"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Load Delivery Site Data To Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "CSP"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "blob_deliverysites_staging_data",
+								"type": "DatasetReference"
+							},
+							"name": "StagingBlobCountry"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_site_csp_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "sitedata"
+						},
+						{
+							"dataset": {
+								"referenceName": "blob_pool_exported_data",
+								"type": "DatasetReference"
+							},
+							"name": "pooldata"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "blob_deliverysite_intermediate_data",
+								"type": "DatasetReference"
+							},
+							"name": "IntermediateBlobDeliverySite",
+							"description": "Export data to blob_customer_data"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DataTransformation"
+						},
+						{
+							"name": "SelectRequiredColumns"
+						},
+						{
+							"name": "LookupSite"
+						},
+						{
+							"name": "SelectSite"
+						},
+						{
+							"name": "LookupPool"
+						},
+						{
+							"name": "SelectPool"
+						}
+					],
+					"script": "source(output(\n\t\tsite_id as string,\n\t\ttype as string,\n\t\tdrop_number as string,\n\t\taddress as string,\n\t\tpool_id as string,\n\t\tclient_name as string,\n\t\temail as string,\n\t\tscv_code as string,\n\t\tstatus as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['delivery_sites']) ~> StagingBlobCountry\nsource(output(\n\t\tmaersk_sitecode as string,\n\t\tmaersk_siteid as string,\n\t\tmaersk_name as string,\n\t\tmaersk_country as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['sitecsp/*.parquet']) ~> sitedata\nsource(output(\n\t\tmaersk_name as string,\n\t\tmaersk_poolid as string,\n\t\tmaersk_poolcode as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'parquet',\n\twildcardPaths:['pool/*.parquet']) ~> pooldata\nStagingBlobCountry derive(site_id = trim(toString(byName('site_id'))),\n\t\ttype = trim(toString(byName('type'))),\n\t\tdrop_number = trim(toString(byName('drop_number'))),\n\t\taddress = trim(toString(byName('address'))),\n\t\tpool_id = trim(toString(byName('pool_id'))),\n\t\tclient_name = trim(toString(byName('client_name'))),\n\t\temail = trim(toString(byName('email'))),\n\t\tscv_code = trim(toString(byName('scv_code'))),\n\t\tstatus = case(trim(toString(byName('status')))=='Active',0,1)) ~> DataTransformation\nDataTransformation select(mapColumn(\n\t\tmaersk_siteid = site_id,\n\t\tmaersk_name = client_name,\n\t\tmaersk_type = type,\n\t\tmaersk_dropnumber = drop_number,\n\t\tmaersk_address = address,\n\t\tmaersk_poolid = pool_id,\n\t\tclient_name,\n\t\tmaersk_email = email,\n\t\tmaersk_scvcode = scv_code,\n\t\tstatecode = status,\n\t\tmaersk_idofpool = pool_id,\n\t\tmaersk_idofsite = site_id\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> SelectRequiredColumns\nSelectRequiredColumns, sitedata lookup(SelectRequiredColumns@maersk_siteid == maersk_sitecode,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupSite\nLookupSite select(mapColumn(\n\t\tmaersk_siteid = sitedata@maersk_siteid,\n\t\tmaersk_name = SelectRequiredColumns@maersk_name,\n\t\tmaersk_type,\n\t\tmaersk_dropnumber,\n\t\tmaersk_address,\n\t\tmaersk_poolid,\n\t\tmaersk_clientname = SelectRequiredColumns@maersk_name,\n\t\tmaersk_email,\n\t\tmaersk_scvcode,\n\t\tstatecode,\n\t\tmaersk_idofpool,\n\t\tmaersk_idofsite\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> SelectSite\nSelectSite, pooldata lookup(SelectSite@maersk_poolid == maersk_poolcode,\n\tmultiple: false,\n\tpickup: 'any',\n\tbroadcast: 'auto')~> LookupPool\nLookupPool select(mapColumn(\n\t\tmaersk_siteid,\n\t\tmaersk_name = SelectSite@maersk_name,\n\t\tmaersk_type,\n\t\tmaersk_dropnumber,\n\t\tmaersk_address,\n\t\tmaersk_poolid = pooldata@maersk_poolid,\n\t\tmaersk_clientname,\n\t\tmaersk_email,\n\t\tmaersk_scvcode,\n\t\tstatecode,\n\t\tmaersk_idofpool,\n\t\tmaersk_idofsite\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> SelectPool\nSelectPool sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\ttruncate: true,\n\tmapColumn(\n\t\tmaersk_siteid,\n\t\tmaersk_name,\n\t\tmaersk_type,\n\t\tmaersk_dropnumber,\n\t\tmaersk_address,\n\t\tmaersk_poolid,\n\t\tmaersk_clientname,\n\t\tmaersk_email,\n\t\tmaersk_scvcode,\n\t\tstatecode,\n\t\tmaersk_idofpool,\n\t\tmaersk_idofsite\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> IntermediateBlobDeliverySite"
+				}
+			},
+			"dependsOn": [
+				"[variables('factoryId')]"
+			]
+		}
+	]
+}
